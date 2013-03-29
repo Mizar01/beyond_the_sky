@@ -1,0 +1,71 @@
+<html>
+<head>
+      <script src="ace3/lib/jquery-1.8.2.min.js"></script>
+      <script src="ace3/lib/three.min.js"></script>
+      <script src="ace3/lib/js/shaders/CopyShader.js"></script>
+      <script src="ace3/lib/js/postprocessing/RenderPass.js"></script>
+      <script src="ace3/lib/js/postprocessing/BloomPass.js"></script>
+      <script src="ace3/lib/js/postprocessing/ShaderPass.js"></script>
+      <script src="ace3/lib/js/postprocessing/EffectComposer.js"></script>
+
+      <script src="ace3/lib/js/shaders/HueSaturationShader.js"></script>
+      <script src="ace3/lib/js/shaders/ColorifyShader.js"></script>
+      <script src="ace3/lib/js/shaders/FilmShader.js"></script>
+      <script src="ace3/lib/js/postprocessing/FilmPass.js"></script>
+      <script src="ace3/lib/js/shaders/DotScreenShader.js"></script>
+      <script src="ace3/lib/js/postprocessing/DotScreenPass.js"></script>
+
+      <script src="ace3/lib/js/postprocessing/MaskPass.js"></script>
+      <script src="ace3/ace3_standalone_alpha.js"></script>
+      <script src="game/actors/player.js"></script>
+      <script src="game/actors/platform.js"></script>
+      <script src="game/actors/effects.js"></script>
+      <script src="game/actors/others.js"></script>      
+      <script src="game/beyond_the_sky.js"></script>
+
+
+      <link rel="stylesheet" type="text/css" href="ace3/ace3.css" />
+      <script>
+      	$(document).ready(function() {
+   		    game_init()
+		      game_run()
+		    });
+      </script>
+
+
+      <script id="borderShader" type="x-shader/x-fragment">
+              uniform vec2 resolution;
+              uniform vec3 borderColor;
+              uniform float borderSize;
+              uniform float cycles;
+              uniform vec3 color;
+              varying vec2 vUv;
+
+              void main(void) {
+                //float cycle = mod(cycles, 1000.0) / 1000.0; //number between 0 and 1 , cyclical in theory
+                //float angle = 6.28 * cycle;
+                vec3 c = color;
+                vec2 p = -1.0 + 2.0 * vUv; // coords with 0,0 in the middle of the material (limits -1 and 1)
+                float opacity = 1.0;
+                float border = borderSize;
+                if (p.x < (-1.0 + border) || p.x > (1.0 - border) || p.y < (-1.0 + border) || p.y > (1.0 - border)) {
+                  c = borderColor;
+                  //opacity = 0.1 + abs(sin(angle));
+                }
+                
+                // if (opacity > 1.0) {
+                //   opacity = 1.0;
+                // }
+                opacity = 1.0;
+                gl_FragColor = vec4(c, opacity);
+              }
+
+      </script>
+</head>
+<body>
+      <audio id='main_theme'>
+        <!--<source src='media/up1.mp3' type="audio/mpeg"/>
+        Your Browser does not support HTML 5 Audio Element-->
+      </audio>
+</body>
+</html>
