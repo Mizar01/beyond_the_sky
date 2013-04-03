@@ -17,9 +17,13 @@ var optimizer = null // optimizer is a memory used throughout the entire game to
 // var displayInfo = null //actor that shows dynamic info on screen during game.
 var player = null;
 
+Physijs.scripts.worker = 'ace3/lib/physijs_worker.js';
+Physijs.scripts.ammo = 'ammo.js';
+
 function game_init() {
-    ace3 = new ACE3()
-    ace3.setBGColor(0xffffff)
+    ace3 = new ACE3(true);
+    ace3.setBGColor(0xffffff);
+    ace3.scene.setGravity(new THREE.Vector3( 0, -9.8, 0 )); 
     //ace3.addPostProcessing();
     //ace3.setFog(0.02)
     //mainThemeSound = $("#main_theme").get(0)
@@ -29,25 +33,32 @@ function game_init() {
 
     var posPrec = new THREE.Vector3(0, 0, 0);
     var width = 4
-    firstPlatform = new Platform(posPrec, width * 10, 0xff0000);
+    firstPlatform = new Platform(posPrec, width * 100, 0xff0000);
     gameManager.registerActor(firstPlatform);
-    for (var i=0; i < 150; i++) {
+    var nPlatforms = 150;
+    for (var i=0; i < nPlatforms; i++) {
         var c = GameUtils.getRandomHexColor();
         var rx = THREE.Math.randFloat(width * 1, width * 2);
         var rz = THREE.Math.randFloat(width * 1, width * 2);
         var rxSign = THREE.Math.randInt(0,1) == 0 ? -1:1; 
         var rzSign = THREE.Math.randInt(0,1) == 0 ? -1:1;
-        var p = new Platform(new THREE.Vector3(rx * rxSign, 0, rz * rzSign), width, c);
-        p.obj.position.addSelf(posPrec);
+        var p = new Platform(new THREE.Vector3(rx * rxSign, 0, rz * rzSign), width, c, 0);
+        p.obj.position.add(posPrec);
         p.obj.position.y = (i + 1) * 2.5; // note : the position is not set before, because it must be absolute.
         p.setPickable();
         gameManager.registerActor(p);
         posPrec = p.obj.position;
+
+        // placing a checkpoint each nFreq platforms.
+        var nFreq = 1;
+        if ((i + 1) % nFreq == 0) {
+            p.placeCheckPoint();
+        }
     }
 
     player = new Player(firstPlatform);
     player.obj.position = firstPlatform.obj.position.clone();
-    player.obj.position.y += 0.3 * 2;
+    player.obj.position.y += 0.3 * 3;
     gameManager.registerActor(player);
 
     //adding ascending polygons (as background)
@@ -74,7 +85,7 @@ function game_init() {
         var cp = ace3.camera.pivot.position;
         if (cp.distanceTo(tp) > 0.3) { 
             var d = ACE3.Math.getDirection(cp, tp);
-            cp.addSelf(d.multiplyScalar(this.followSpeed)); 
+            cp.add(d.multiplyScalar(this.followSpeed)); 
         } else {
             cp.x = tp.x; cp.y = tp.y; cp.z = tp.z;
         }
@@ -142,7 +153,7 @@ function game_init() {
 
     gameManager.registerLogic(cameraFollowLogic);
     gameManager.registerLogic(selectorLogic);
-    gameManager.registerLogic(birdCallLogic);
+    //gameManager.registerLogic(birdCallLogic);
 
     //Adjust the pitch of the camera
     camera_reset_position()

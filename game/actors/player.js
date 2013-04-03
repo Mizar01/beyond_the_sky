@@ -1,6 +1,15 @@
 Player = function(firstPlatform) {
     ACE3.Actor3D.call(this);
-    this.obj = ACE3.Builder.sphere(0.5, 0x0000ff);
+    //this.obj = ACE3.Builder.sphere(0.5, 0x0000ff);
+    var color = 0x0000ff;
+    var g = new THREE.SphereGeometry(0.5);
+    var m = Physijs.createMaterial(new THREE.MeshBasicMaterial({'color':color}),
+            .4, // low friction
+            .6 // high restitution
+            );
+    this.obj = new Physijs.BoxMesh(g, m,
+            1 // mass
+            );
 
     this.jumping = false;
     this.forceVertical = 0;
@@ -16,30 +25,41 @@ Player = function(firstPlatform) {
 Player.extends(ACE3.Actor3D, "Player");
 
 Player.prototype.run = function() {
-    if (this.jumping) {
-        this.obj.translateZ(this.forceForward);
-        this.obj.position.y += this.forceVertical;
 
-        this.forceVertical -= 0.02;
-        this.forceForward -= 0.005;
-        if (this.forceForward < 0) {
-            this.forceForward = 0;
-        }
-
-        if (this.forceVertical < 0 && this.target.obj.position.y > this.obj.position.y + 3) {
-            this.jumping = false;
-            player.resetJump();
-            this.target = null;
-        } else {
-            if (this.targetReached()) {
-                this.jumping = false;
-                this.adjustHeightOnTarget();
-                this.basePlatform = this.target;
-                this.target = null;
-                // this.changeBGColor();
-            }
+    if (this.target != null && this.target.checkPoint != null) {
+        var cp = this.target.checkPoint.obj.position;
+        if (this.obj.position.distanceTo(cp) < 1) {
+            this.basePlatform = this.target;
+            this.target.checkPoint.setForRemoval();
         }
     }
+
+    if (this.obj.position.y < this.basePlatform.obj.position.y) {
+        this.jumping = false;
+        player.resetJump();
+        this.target = null;            
+    }
+    //this.obj.translateZ(this.forceForward);
+    //this.obj.position.y += this.forceVertical;
+
+    //this.forceVertical -= 0.02;
+    //this.forceForward -= 0.005;
+    //if (this.forceForward < 0) {
+    //    this.forceForward = 0;
+    //}
+
+    // if (this.forceVertical < 0 && this.target.obj.position.y > this.obj.position.y + 3) {
+
+    // } else {
+    //     if (this.targetReached()) {
+    //         this.jumping = false;
+    //         this.adjustHeightOnTarget();
+    //         this.basePlatform = this.target;
+    //         this.target = null;
+    //         // this.changeBGColor();
+    //     }
+    // }
+
 }
 /**
 * This method works only for non post processing mode.
@@ -55,7 +75,10 @@ Player.prototype.changeBGColor = function() {
 
 Player.prototype.resetJump = function() {
     player.obj.position = this.basePlatform.obj.position.clone();
-    player.obj.position.y += 0.3 * 2;        
+    player.obj.position.y += 1;
+    player.obj.__dirtyPosition = true;
+    player.obj.setLinearVelocity(new THREE.Vector3(0, 0, 0));
+    //player.obj.applyImpulse(new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, 0, 0));      
 }
 
 Player.prototype.targetReached = function() {
@@ -77,16 +100,19 @@ Player.prototype.adjustHeightOnTarget = function() {
 
 
 Player.prototype.jump = function(platform, force) {
-    if (!this.jumping) {
+    //if (!this.jumping) {
         // position for jumping
-        var pz = platform.obj.position.z;
-        var px = platform.obj.position.x;
-        this.obj.lookAt(new THREE.Vector3(px, this.obj.position.y, pz));
-        this.forceForward = force/100;
+        //var pz = platform.obj.position.z;
+        //var px = platform.obj.position.x;
+        var tvpos = platform.obj.position.clone().add(new THREE.Vector3(0, 25, 0));
+        var dir = ACE3.Math.getDirection(this.obj.position, tvpos);
+        this.forceForward = force / 4;
         this.forceVertical = force/100;
+        this.obj.applyImpulse(dir.multiplyScalar(this.forceForward), new THREE.Vector3(0, 0, 0));
+        //console.log(dir.multiplyScalar(1));
         this.jumping = true;
         this.target = platform;
-    }
+    //}
 }
 
 Player.prototype.shootAt = function(target) {
