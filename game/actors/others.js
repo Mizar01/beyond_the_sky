@@ -110,7 +110,7 @@ Laser.prototype.reset = function(vec3Pos) {
     this.needReset = false
 }
 
-CheckPoint = function(vec3pos) {
+CheckPoint = function(vec3pos, index) {
     ACE3.ParticleActor.call(this, {
             texture: 'media/particle2.png',
             size: 2,
@@ -121,6 +121,7 @@ CheckPoint = function(vec3pos) {
     // NOTE : don't put the lookAt here, put in reset or in run function.
     this.collisionDistance = 0.5;
     this.needReset = true;
+    this.index = index;  //index in the checkpointArray
 }
 
 CheckPoint.extends(ACE3.ParticleActor, "CheckPoint")

@@ -16,6 +16,7 @@ Player = function(firstPlatform) {
     this.forceForward = 0;
     this.target = null;
     this.basePlatform = firstPlatform;
+    this.checkPointIndex = -1;
     this.damage = 5;
     this.precision = 50; // percentage
     this.cooldown = 0.5; 
@@ -30,7 +31,12 @@ Player.prototype.run = function() {
         var cp = this.target.checkPoint.obj.position;
         if (this.obj.position.distanceTo(cp) < 1) {
             this.basePlatform = this.target;
-            this.target.checkPoint.setForRemoval();
+            var newCPIndex = this.target.checkPoint.index;
+            //removes all the previous checkpoints from the scene
+            for (var i = this.checkPointIndex + 1; i <= newCPIndex; i++) {
+                checkPoints[i].setForRemoval();
+            }
+            this.checkPointIndex = newCPIndex;
         }
     }
 
@@ -81,18 +87,18 @@ Player.prototype.resetJump = function() {
     //player.obj.applyImpulse(new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, 0, 0));      
 }
 
-Player.prototype.targetReached = function() {
-    var tp = this.target.obj.position;
-    var p = this.obj.position;
-    var tolerancePerc = 0.9;
-    var tw = this.target.width * tolerancePerc;
-    if (p.x > tp.x - tw/2 && p.x < tp.x + tw/2 && 
-        p.z > tp.z - tw/2 && p.z < tp.z + tw/2 && 
-        p.y > tp.y + 0.2  && p.y < tp.y + 0.7) {
-        return true;
-    }
-    return false;
-}
+// Player.prototype.targetReached = function() {
+//     var tp = this.target.obj.position;
+//     var p = this.obj.position;
+//     var tolerancePerc = 0.9;
+//     var tw = this.target.width * tolerancePerc;
+//     if (p.x > tp.x - tw/2 && p.x < tp.x + tw/2 && 
+//         p.z > tp.z - tw/2 && p.z < tp.z + tw/2 && 
+//         p.y > tp.y + 0.2  && p.y < tp.y + 0.7) {
+//         return true;
+//     }
+//     return false;
+// }
 
 Player.prototype.adjustHeightOnTarget = function() {
     this.obj.position.y = this.target.obj.position.y + 0.6;

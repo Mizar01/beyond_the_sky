@@ -17,6 +17,9 @@ var optimizer = null // optimizer is a memory used throughout the entire game to
 // var displayInfo = null //actor that shows dynamic info on screen during game.
 var player = null;
 
+var platforms = [];
+var checkPoints = [];
+
 Physijs.scripts.worker = 'ace3/lib/physijs_worker.js';
 Physijs.scripts.ammo = 'ammo.js';
 
@@ -36,6 +39,7 @@ function game_init() {
     firstPlatform = new Platform(posPrec, width * 100, 0xff0000);
     gameManager.registerActor(firstPlatform);
     var nPlatforms = 150;
+    var cpIter = 0;
     for (var i=0; i < nPlatforms; i++) {
         var c = GameUtils.getRandomHexColor();
         var rx = THREE.Math.randFloat(width * 1, width * 2);
@@ -50,10 +54,13 @@ function game_init() {
         posPrec = p.obj.position;
 
         // placing a checkpoint each nFreq platforms.
-        var nFreq = 1;
+        var nFreq = 3;
         if ((i + 1) % nFreq == 0) {
-            p.placeCheckPoint();
+            checkPoints[cpIter] = p.placeCheckPoint(cpIter);
+            cpIter++;
         }
+
+        platforms[i] = p;
     }
 
     player = new Player(firstPlatform);
@@ -98,7 +105,7 @@ function game_init() {
     selectorLogic.selectedBird = null;
     selectorLogic.jumpForce = 0;
 
-    selectorLogic.info = new ACE3.DisplayValue("Force :", "0", ace3.getFromRatio(5, 5));
+    selectorLogic.info = new ACE3.DisplayValue("Force", "0", ace3.getFromRatio(5, 5));
     gameManager.registerActor(selectorLogic.info);
 
     selectorLogic.run = function() {
