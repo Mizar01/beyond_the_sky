@@ -66,6 +66,8 @@ function game_init() {
     player = new Player(firstPlatform);
     player.obj.position = firstPlatform.obj.position.clone();
     player.obj.position.y += 0.3 * 3;
+    //player keyboard controls are discontinued
+    //player.addControls();
     gameManager.registerActor(player);
 
     //adding ascending polygons (as background)
@@ -124,6 +126,8 @@ function game_init() {
                     if (p.getType() == 'Platform') {
                         this.selectedPlatform = p;
                         this.jumpForce = 0;
+                        player.lookAtXZFixed(this.selectedPlatform.obj.position);
+                        player.obj.__dirtyRotation = true;
                     }else if (p.getType() == 'Bird') {
                         this.selectedBird = p;
                     }
@@ -133,7 +137,8 @@ function game_init() {
 
         if (ace3.eventManager.mouseReleased()) { // 'x'
             if (this.selectedPlatform != null) {
-                player.jump(this.selectedPlatform, this.jumpForce);
+                // player.jump(this.selectedPlatform, this.jumpForce);
+                player.autoJump(this.selectedPlatform);
                 this.jumpForce = 0;
                 this.selectedPlatform = null;
                 this.info.setValue("0");
@@ -160,6 +165,10 @@ function game_init() {
 
     gameManager.registerLogic(cameraFollowLogic);
     gameManager.registerLogic(selectorLogic);
+    // add alternative controls to player (DISABLED)
+    //gameManager.registerLogic(player.playerControlsLogic)
+    //DISABLE DEFAULT CAMERA BEHAVIOUR
+    ace3.camera.control = function() {};
     //gameManager.registerLogic(birdCallLogic);
 
     //Adjust the pitch of the camera
