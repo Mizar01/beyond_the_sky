@@ -36,17 +36,25 @@ function game_init() {
 
     var posPrec = new THREE.Vector3(0, 0, 0);
     var width = 4
+    var dist = 5.5; //x,z distance between sequential platforms
     firstPlatform = new Platform(posPrec, width * 100, 0xff0000);
     gameManager.registerActor(firstPlatform);
     var nPlatforms = 150;
     var cpIter = 0;
     for (var i=0; i < nPlatforms; i++) {
         var c = GameUtils.getRandomHexColor();
-        var rx = THREE.Math.randFloat(width * 1, width * 2);
-        var rz = THREE.Math.randFloat(width * 1, width * 2);
-        var rxSign = THREE.Math.randInt(0,1) == 0 ? -1:1; 
-        var rzSign = THREE.Math.randInt(0,1) == 0 ? -1:1;
-        var p = new Platform(new THREE.Vector3(rx * rxSign, 0, rz * rzSign), width, c, 0);
+        // var rx = THREE.Math.randFloat(width * 1, width * 2);
+        // var rz = THREE.Math.randFloat(width * 1, width * 2);
+        // var rxSign = THREE.Math.randInt(0,1) == 0 ? -1:1; 
+        // var rzSign = THREE.Math.randInt(0,1) == 0 ? -1:1;
+
+        //The distance is constant. So the position of the next plaform 
+        //(x, z) is in a circle around the former platform.
+        var rAngle = THREE.Math.randFloat(0, Math.PI * 2);
+        var rx = dist * Math.cos(rAngle);
+        var rz = dist * Math.sin(rAngle);
+
+        var p = new Platform(new THREE.Vector3(rx, 0, rz), width, c, 0);
         p.obj.position.add(posPrec);
         p.obj.position.y = (i + 1) * 2.5; // note : the position is not set before, because it must be absolute.
         p.setPickable();

@@ -4,8 +4,8 @@ Player = function(firstPlatform) {
     var color = 0x0000ff;
     var g = new THREE.SphereGeometry(0.5);
     var m = Physijs.createMaterial(new THREE.MeshBasicMaterial({'color':color}),
-            .4, // low friction
-            .6 // high restitution
+            50, // low friction (sliding)
+            .1 // very low restitution (bouncing)
             );
     this.obj = new Physijs.BoxMesh(g, m,
             1 // mass
@@ -26,6 +26,10 @@ Player = function(firstPlatform) {
     this.currentRotationY = 0;
     this.rotationSpeed = 0.08;
     this.speed = 0.03;
+
+    this.verifyStableMax = 20;  //for some iteration i have to verify the velocity to be less 
+                                //to a value to decide to re-enable jumps.
+    this.verifyStableCount = 20;
 }
 
 Player.extends(ACE3.Actor3D, "Player");
@@ -52,7 +56,7 @@ Player.prototype.run = function() {
             if (this.target.checkPoint != null) {
                 this.checkPointReached();
             }
-            this.resetJump(this.target);
+            //this.resetJump(this.target);
         }
     }
 
@@ -60,6 +64,22 @@ Player.prototype.run = function() {
         player.resetJump(this.basePlatform);
         this.target = null;            
     }
+
+
+    // this block controls if the player has a poor velocity for 
+    // a sequence of iterations. If the player does not verify this 
+    // situation, the counter for verifications is reset to Max.
+    var lv = this.obj.getLinearVelocity();
+    if (this.jumping && lv.lengthSq() < 0.4) {
+        this.verifyStableCount--;
+        if (this.verifyStableCount <= 0) {
+            this.jumping = false;
+            this.verifyStableCount = this.verifyStableMax;
+        }
+    }else {
+        this.verifyStableCount  = this.verifyStableMax;
+    }
+
     //this.obj.translateZ(this.forceForward);
     //this.obj.position.y += this.forceVertical;
 
@@ -186,15 +206,17 @@ Player.prototype.jump = function(platform, force) {
 */
 Player.prototype.autoJump = function(platform) {
     if (!this.jumping) {
-        var forceRatio = 5;
+        var forceRatio = 38;
+        //console.log("forceRatio:" + forceRatio);
 
-        var dist = this.obj.position.distanceTo(platform.obj.position);
-        var distXZ = player.XZDistanceTo(platform);
-        console.log("distXZ: " + distXZ);
-        if (distXZ > 1 && distXZ < 5) {
-            forceRatio *= 10/distXZ;
-        }
-        this.jump(platform, dist * forceRatio);
+        // var dist = this.obj.position.distanceTo(platform.obj.position);
+        // var distXZ = player.XZDistanceTo(platform);
+        //console.log("distXZ: " + distXZ);
+        // if (distXZ > 1 && distXZ < 5) {
+        //     console.log("applying special ratio");
+        //     forceRatio *= 10/distXZ;
+        // }
+        this.jump(platform, forceRatio);
     }
 }
 
