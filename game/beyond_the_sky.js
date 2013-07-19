@@ -3,8 +3,9 @@
 var ace3 = null
 var test_logic = null
 var gameManager = null // shortcut to ace3.defaultActorManager
-var hudManager = null
+var hudManager = null  // in game menu
 var menuManager = null // shortcut to another ActorManager for menus
+var upgradeManager = null //an upgrade menu during game
 var chooseMapMenuManager = null 
 
 var mainThemeSound = null
@@ -86,13 +87,6 @@ function game_init() {
     var skyBox = new ACE3.SkyBox("media/sb1-")
     gameManager.registerActor(skyBox)
 
-
-
-
-
-
-
-
     var cameraFollowLogic = new ACE3.Logic();
     cameraFollowLogic.followSpeed = 0.1;
     cameraFollowLogic.run = function() {
@@ -115,41 +109,53 @@ function game_init() {
     selectorLogic.selectedBird = null;
     selectorLogic.jumpForce = 0;
 
-    selectorLogic.info = new ACE3.DisplayValue("Force", "0", ace3.getFromRatio(5, 5));
-    gameManager.registerActor(selectorLogic.info);
+    //selectorLogic.info = new ACE3.DisplayValue("Force", "0", ace3.getFromRatio(5, 5));
+    //gameManager.registerActor(selectorLogic.info);
 
     selectorLogic.run = function() {
         var pm = ace3.pickManager
-        if (ace3.eventManager.mousePressed()) {
-            if (this.selectedPlatform != null) {
-                this.jumpForce += 1;
-                this.info.setValue(this.jumpForce);
-            }else if (this.selectedBird != null) {
+        // if (ace3.eventManager.mousePressed()) {
+        //     if (this.selectedPlatform != null) {
+        //         this.jumpForce += 1;
+        //         this.info.setValue(this.jumpForce);
+        //     }else if (this.selectedBird != null) {
 
-            }else {
-                pm.pickActor();
-                var p = pm.pickedActor;
-                if (p != null) {
-                    // console.log(p.getType());
-                    if (p.getType() == 'Platform') {
-                        this.selectedPlatform = p;
-                        this.jumpForce = 0;
-                        player.lookAtXZFixed(this.selectedPlatform.obj.position);
-                        player.obj.__dirtyRotation = true;
-                    }else if (p.getType() == 'Bird') {
-                        this.selectedBird = p;
-                    }
-                }
-            }
-        }
+        //     }else {
+        //         pm.pickActor();
+        //         var p = pm.pickedActor;
+        //         if (p != null) {
+        //             // console.log(p.getType());
+        //             if (p.getType() == 'Platform') {
+        //                 this.selectedPlatform = p;
+        //                 this.jumpForce = 0;
+        //                 player.lookAtXZFixed(this.selectedPlatform.obj.position);
+        //                 player.obj.__dirtyRotation = true;
+        //             }else if (p.getType() == 'Bird') {
+        //                 this.selectedBird = p;
+        //             }
+        //         }
+        //     }
+        // }
 
         if (ace3.eventManager.mouseReleased()) { // 'x'
+            pm.pickActor();
+            var p = pm.pickedActor;
+            if (p != null) {  
+                // console.log(p.getType());
+                if (p.getType() == 'Platform') {
+                    this.selectedPlatform = p;
+                    player.lookAtXZFixed(this.selectedPlatform.obj.position);
+                    player.obj.__dirtyRotation = true;
+                }else if (p.getType() == 'Bird') {
+                    this.selectedBird = p;
+                }               
+            }        
             if (this.selectedPlatform != null) {
                 // player.jump(this.selectedPlatform, this.jumpForce);
                 player.autoJump(this.selectedPlatform);
                 this.jumpForce = 0;
                 this.selectedPlatform = null;
-                this.info.setValue("0");
+                //this.info.setValue("0");
             }else if (this.selectedBird != null) {
                 //this.selectedBird.setForRemoval();
                 player.shootAt(this.selectedBird);
@@ -171,22 +177,28 @@ function game_init() {
         } 
     }
 
+
+
     gameManager.registerLogic(cameraFollowLogic);
     gameManager.registerLogic(selectorLogic);
     // add alternative controls to player (DISABLED)
     //gameManager.registerLogic(player.playerControlsLogic)
     //DISABLE DEFAULT CAMERA BEHAVIOUR
     ace3.camera.control = function() {};
-    //gameManager.registerLogic(birdCallLogic);
+    gameManager.registerLogic(birdCallLogic);
+    gameManager.registerLogic(new ESCPauseGameLogic());
 
     //Adjust the pitch of the camera
     camera_reset_position()
-    gameManager.play()
-    //menu_define()
-    //game_pause()
-    //game_play()
+    
 
 
+    defineInGameHUD()
+    defineUpgradeManager()
+    defineMenuManager()
+
+
+    game_play();
 }
 
 function camera_reset_position() {
@@ -202,6 +214,33 @@ function game_run() {
     ace3.run()
 }
 
+function game_play() {
+    upgradeManager.pause();
+    menuManager.pause()
+    gameManager.play()
+    if (hudManager) {
+        hudManager.play()
+    }
+}
+
+function game_pause() {
+    upgradeManager.pause();
+    if (hudManager) {
+        hudManager.pause()
+    }
+    gameManager.pause()
+    menuManager.play()
+}
+
+function game_upgrades() {
+    if (hudManager) {
+        hudManager.pause()
+    }
+    gameManager.pause()
+    menuManager.pause()
+    upgradeManager.play();   
+}
+
 
 
 
@@ -215,6 +254,40 @@ GameUtils = {
         return c = parseInt("0x" + randR + randG + randB);
     },
 }
+
+function defineInGameHUD() {
+    mgr = new ACE3.PureHTMLActorManager();
+    //HUD IN GAME ELEMENTS
+    // PAUSE TO MENU BUTTON
+    var escButton = new DefaultGameButton("PAUSE", ace3.getFromRatio(2, 2),
+                            new THREE.Vector2(60, 60), null)
+    escButton.onClickFunction = function() {game_pause()}
+    mgr.registerActor(escButton)
+
+    //PAUSE TO UPGRADE BUTTON
+    var upButton = new DefaultGameButton("UPGRADES", ace3.getFromRatio(70, 2),
+                            new THREE.Vector2(60, 60), null)
+    upButton.onClickFunction = function() {game_upgrades()}
+    mgr.registerActor(upButton)
+
+
+    
+    ace3.actorManagerSet.push(mgr);
+    hudManager = mgr;
+}
+
+function defineMenuManager() {
+    mgr = new ACE3.PureHTMLActorManager();
+    ace3.actorManagerSet.push(mgr);
+    menuManager = mgr;
+}
+
+function defineUpgradeManager() {
+    mgr = new ACE3.PureHTMLActorManager();
+    ace3.actorManagerSet.push(mgr);
+    upgradeManager = mgr;
+}
+
 
 
 

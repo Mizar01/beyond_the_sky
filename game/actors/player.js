@@ -10,8 +10,26 @@ Player = function(firstPlatform) {
     this.obj = new Physijs.BoxMesh(g, m,
             1 // mass
             );
-    var arms = ACE3.Builder.cube2(2, 0.2, 0.2, 0x00ff00)
-    this.obj.add(arms);
+
+    //ARMS ---------------------------
+    this.armLeftPivot = new THREE.Object3D()
+    this.armLeftPivot.position.x = 0.4;
+    this.armLeftPivot.rotation.set(0.4, -Math.PI/2, 0);
+    this.armLeft = ACE3.Builder.cube2(0.5, 0.15, 0.15, 0x00ff00)
+    this.armLeft.position.x = 0.4;
+    this.armLeftPivot.add(this.armLeft)
+
+    this.armRightPivot = new THREE.Object3D()
+    this.armRightPivot.position.x = - 0.4;
+    this.armRightPivot.rotation.set(0.4, -Math.PI/2, 0);
+    this.armRight = ACE3.Builder.cube2(0.5, 0.15, 0.15, 0x00ffaa)
+    this.armRight.position.x = 0.4;
+    this.armRightPivot.add(this.armRight)
+
+    this.obj.add(this.armLeftPivot);
+    this.obj.add(this.armRightPivot);
+    //---------------------------------
+
     this.jumping = false;
     this.forceVertical = 0;
     this.forceForward = 0;
@@ -27,9 +45,9 @@ Player = function(firstPlatform) {
     this.rotationSpeed = 0.08;
     this.speed = 0.03;
 
-    this.verifyStableMax = 20;  //for some iteration i have to verify the velocity to be less 
+    this.verifyStableMax = 4;  //for some iteration i have to verify the velocity to be less 
                                 //to a value to decide to re-enable jumps.
-    this.verifyStableCount = 20;
+    this.verifyStableCount = this.verifyStableMax;
 }
 
 Player.extends(ACE3.Actor3D, "Player");
@@ -69,17 +87,19 @@ Player.prototype.run = function() {
     // this block controls if the player has a poor velocity for 
     // a sequence of iterations. If the player does not verify this 
     // situation, the counter for verifications is reset to Max.
-    var lv = this.obj.getLinearVelocity();
-    if (this.jumping && lv.lengthSq() < 0.4) {
-        this.verifyStableCount--;
-        if (this.verifyStableCount <= 0) {
-            this.jumping = false;
-            this.verifyStableCount = this.verifyStableMax;
-        }
-    }else {
-        this.verifyStableCount  = this.verifyStableMax;
-    }
 
+    if (this.jumping) {
+        var lv = this.obj.getLinearVelocity();
+        if (lv.lengthSq() < 0.4) {
+            this.verifyStableCount--;
+            if (this.verifyStableCount <= 0) {
+                this.jumping = false;
+                this.verifyStableCount = this.verifyStableMax;
+            }
+        }else {
+            this.verifyStableCount  = this.verifyStableMax;
+        }
+    }
     //this.obj.translateZ(this.forceForward);
     //this.obj.position.y += this.forceVertical;
 
