@@ -286,6 +286,51 @@ function defineUpgradeManager() {
     mgr = new ACE3.PureHTMLActorManager();
     ace3.actorManagerSet.push(mgr);
     upgradeManager = mgr;
+
+    var displayInfo = new ACE3.DisplayValue("", "", ace3.getFromRatio(15, 7))
+    displayInfo.separator = ""
+    mgr.registerActor(displayInfo)
+
+    // some properties and functions for all buttons in the upgradegrid
+    function _makeButton(title, indexX, indexY, callbackInfoMessage, onClickFunction) {
+        var b = new DefaultGameButton("UP-W", 
+                                      ace3.getFromRatio(5 + (indexX - 1) * 8, (4 + (indexY -1) * 5)),
+                                      new THREE.Vector2(70, 45), 
+                                      null)
+
+        b.displayInfo = displayInfo
+        b.getInfoMessage = function() {}
+        if (callbackInfoMessage != null) {
+            b.getInfoMessage = callbackInfoMessage;
+        }else {
+            console.warn("Game message : the Default game button [" + title + "] has been defined without info");
+        }
+
+        b.onClickFunction = onClickFunction;
+
+        mgr.registerActor(b)
+        return b
+    }
+
+    _makeButton("UP-W", 1, 1, 
+        function() {return "Upgrade Weapon Power to level " + player.weaponPowerLevel + 1},
+        function() {player.levels.verifyAndUpgrade(player.levels.weaponPower)}
+        );
+    _makeButton("F-UP", 10, 10, 
+        function() {return "Hello Final"},
+        function() {}
+        );
+
+
+
+
+
+
+
+
+
+
+
 }
 
 

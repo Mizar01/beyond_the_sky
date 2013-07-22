@@ -48,6 +48,9 @@ Player = function(firstPlatform) {
     this.verifyStableMax = 4;  //for some iteration i have to verify the velocity to be less 
                                 //to a value to decide to re-enable jumps.
     this.verifyStableCount = this.verifyStableMax;
+
+    //rpg like properties
+    this.levels = new LevelDB();
 }
 
 Player.extends(ACE3.Actor3D, "Player");
@@ -288,4 +291,74 @@ Player.prototype.addControls = function() {
         
     }
     this.playerControlsLogic = playerControlsLogic;
+}
+
+
+/**
+   Set of levels for player (or other units as well in some cases)
+*/
+function LevelDB() {
+
+    this.exp = 0
+    
+    this.weaponPower = new LevelProperty("Weapon Power", 1, 3)
+    this.weaponAccuracy = new LevelProperty("Accuracy", 1, 3)
+    this.weaponRate = new LevelProperty("Fire Rate", 1, 3)
+
+    this.shieldMax = new LevelProperty("Shield Max Capacity", 1, 3)
+    this.shieldRegeneration = new LevelProperty("Shield Gen", 1, 3)
+    this.shieldStrength = new LevelProperty("Shield Repulsion", 1, 3)
+
+    this.turretPower = new LevelProperty("Turret Fire Power", 1, 3)
+    this.turretRate = new LevelProperty("Turret Fire Rate", 1, 3)
+    this.turretMax = new LevelProperty("Max no. of turrets", 0, 10)
+
+    this.life = new LevelProperty("Life", 1, 3)
+    this.lifeRegeneration = new LevelProperty("Life Gen", 1, 3)
+
+    this.expGain = new LevelProperty("Exp Gain", 1, 3)
+
+    this.canUpgrade = function(lvlProp) {
+        return lvlProp.canUpgrade(this.exp);
+    }
+
+    this.verifyAndUpgrade = function(lvlProp) {
+        return lvlProp.verifyAndUpgrade(this.exp);
+    }
+
+
+}
+
+function LevelProperty(name, initLevel, expNeeded) {
+    this.name = name;
+    this.level = initLevel;
+    this.expNeeded = expNeeded;
+
+    this.canUpgrade = function(exp) {
+        return this.expNeeded <= exp;
+    }
+
+    /**
+      upgrade 
+      @return the experience taken or -1 if no upgrade happened.
+    */
+    this.verifyAndUpgrade = function(exp) {
+        if (this.canUpgrade(exp)) {
+            this.level++;
+            var expTaken = this.expNeeded;
+            this.expNeeded = this.getExpForNextLevel();
+            return expTaken;
+        }else {
+            return -1;
+        }
+    }
+
+    /**
+     A formula used to calculate the experience needed for a particular
+     level of any thing
+    **/
+    this.getExpForNextLevel = function() {
+        // for now it's very simple
+        return Math.round(Math.pow(this.level + 1, 2.5));
+    }
 }
