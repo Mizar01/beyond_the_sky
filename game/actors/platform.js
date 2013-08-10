@@ -11,17 +11,111 @@ Platform = function(vec3pos, width, color, mass) {
 	var smTemp = ACE3.Utils.getStandardShaderMesh(this.uniform, "generic", "borderShader", g)
 	var physMesh = Physijs.createMaterial(smTemp.material, 0.4, 0.6);
 	this.obj = new Physijs.BoxMesh(g, physMesh, this.mass);
-	this.obj.position = vec3pos;
 	this.checkPoint = null;
+
+	this.spawnPosition = new THREE.Vector3(vec3pos.x, 0, vec3pos.z); // position where the platform spawn and move towards the first of the move positions.
+	this.obj.position = this.spawnPosition
+	this.movePositions = [vec3pos]; //array of positions for an eventual moving of the platform during game.
+	this.overrideTime = 100;
+
+	this.movePhase = "moveToStart"  //moveToStart = when the platform spawn and move towards the first move position
+	                                //waitingRobotJump = the platform is in place and is waiting the coming of robot
+	                                //ready = the platform is ready to play with robot
+	                                //waitingRobotGo = the platform is waiting that the robot goes away 
+	                                //dismiss = the platform has been kicked away from the game
+
 }
 
 Platform.extends(ACE3.Actor3D, "Platform");
 
-Platform.prototype.placeCheckPoint = function(index) {
-	var cp = new CheckPoint(this.obj.position.clone().add(new THREE.Vector3(0, 1, 0)), index);
-	//checkpoints are not children of platform.
-	gameManager.registerActor(cp);
-	this.checkPoint = cp;
-	return cp;
+Platform.prototype.run = function() {
+
+	if (this.movePhase == 'moveToStart') {
+		var distY = Math.abs(this.obj.position.y - this.movePositions[0].y);
+		//console.log(this.obj.position.y + " ---- " + this.movePositions[0].y); 
+		if (distY < 0.3) {
+			// console.log("reached dest");
+			this.obj.position = this.movePositions[0].clone();
+			this.movePhase = "waitingRobotJump";
+		}else {
+			this.obj.position.y += 0.1;
+		}
+		this.obj.__dirtyPosition = true;
+		return;
+	}
+
+	if (this.movePhase == 'waitingRobotJump') {
+		// do nothing. The robot will send the signal to change movePhase
+		return;
+	}
+
+	if (this.movePhase == 'ready') {
+		if (this.overrideTime <= 0) {
+			this.spawnNextPlatform();
+			this.movePhase = 'waitingRobotGo';
+		}else {
+			this.overrideTime--;
+			// TODO : move eventually trough rally points (array of movePositions)
+		}
+		return;
+	}
+
+	if (this.movePhase == 'waitingRobotGo') {
+		// do nothing
+		return;
+	}
+
+
+	if (this.movePhase == 'dismiss') {
+		// TODO : delete the object , and move it away from screen
+		return;
+	}
+
 }
+
+/**
+* Set the phase to ready. This is called by robot when he jumps in
+**/
+Platform.prototype.setReady = function() {
+	this.movePhase = 'ready';
+	if (prevPlatform) {
+		prevPlatform = currentPlatform;
+		prevPlatform.setDismiss();
+	}
+	currentPlatform = this;
+	nextPlatform = null;
+}
+
+Platform.prototype.setDismiss  = function() {
+	this.movePhase = 'dismiss';
+}
+
+
+/**
+* Spawns a brand new platform after this one
+**/
+Platform.prototype.spawnNextPlatform = function() {
+	var width = 4
+    var dist = 5.5; //x,z distance between sequential platforms
+    var c = GameUtils.getRandomHexColor();
+    //The distance is constant. So the position of the next plaform 
+    //(x, z) is in a circle around the former platform.
+    var rAngle = THREE.Math.randFloat(0, Math.PI * 2);
+    var rx = dist * Math.cos(rAngle);
+    var rz = dist * Math.sin(rAngle);
+
+    initPos = new THREE.Vector3(rx, 0, rz);
+    initPos.add(this.obj.position);
+    initPos.y = this.obj.position.y + 2.5;
+
+    var p = new Platform(initPos, width, c, 0);
+
+    p.setPickable();
+    gameManager.registerActor(p);
+    nextPlatform = p;
+}
+
+
+
+
 

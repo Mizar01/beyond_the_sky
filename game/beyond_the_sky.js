@@ -18,7 +18,11 @@ var optimizer = null // optimizer is a memory used throughout the entire game to
 // var displayInfo = null //actor that shows dynamic info on screen during game.
 var player = null;
 
-var platforms = [];
+var platforms = []; // unused
+var currentPlatform = null; // the platform where the robot resides
+var prevPlatform = null; // the going-away platform
+var nextPlatform = null; // the coming platform 
+
 var checkPoints = [];
 
 Physijs.scripts.worker = 'ace3/lib/physijs_worker.js';
@@ -36,44 +40,43 @@ function game_init() {
     gameManager = ace3.defaultActorManager
 
     var posPrec = new THREE.Vector3(0, 0, 0);
-    var width = 4
-    var dist = 5.5; //x,z distance between sequential platforms
-    firstPlatform = new Platform(posPrec, width * 100, 0xff0000);
-    gameManager.registerActor(firstPlatform);
-    var nPlatforms = 150;
-    var cpIter = 0;
-    for (var i=0; i < nPlatforms; i++) {
-        var c = GameUtils.getRandomHexColor();
-        // var rx = THREE.Math.randFloat(width * 1, width * 2);
-        // var rz = THREE.Math.randFloat(width * 1, width * 2);
-        // var rxSign = THREE.Math.randInt(0,1) == 0 ? -1:1; 
-        // var rzSign = THREE.Math.randInt(0,1) == 0 ? -1:1;
+    basePlatform = new Platform(posPrec, 400, 0xff0000);
+    basePlatform.setReady();
+    gameManager.registerActor(basePlatform);
+    // var nPlatforms = 150;
+    // var cpIter = 0;
+    // for (var i=0; i < nPlatforms; i++) {
+    //     var c = GameUtils.getRandomHexColor();
+    //     // var rx = THREE.Math.randFloat(width * 1, width * 2);
+    //     // var rz = THREE.Math.randFloat(width * 1, width * 2);
+    //     // var rxSign = THREE.Math.randInt(0,1) == 0 ? -1:1; 
+    //     // var rzSign = THREE.Math.randInt(0,1) == 0 ? -1:1;
 
-        //The distance is constant. So the position of the next plaform 
-        //(x, z) is in a circle around the former platform.
-        var rAngle = THREE.Math.randFloat(0, Math.PI * 2);
-        var rx = dist * Math.cos(rAngle);
-        var rz = dist * Math.sin(rAngle);
+    //     //The distance is constant. So the position of the next plaform 
+    //     //(x, z) is in a circle around the former platform.
+    //     var rAngle = THREE.Math.randFloat(0, Math.PI * 2);
+    //     var rx = dist * Math.cos(rAngle);
+    //     var rz = dist * Math.sin(rAngle);
 
-        var p = new Platform(new THREE.Vector3(rx, 0, rz), width, c, 0);
-        p.obj.position.add(posPrec);
-        p.obj.position.y = (i + 1) * 2.5; // note : the position is not set before, because it must be absolute.
-        p.setPickable();
-        gameManager.registerActor(p);
-        posPrec = p.obj.position;
+    //     var p = new Platform(new THREE.Vector3(rx, 0, rz), width, c, 0);
+    //     p.obj.position.add(posPrec);
+    //     p.obj.position.y = (i + 1) * 2.5; // note : the position is not set before, because it must be absolute.
+    //     p.setPickable();
+    //     gameManager.registerActor(p);
+    //     posPrec = p.obj.position;
 
-        // placing a checkpoint each nFreq platforms.
-        var nFreq = 3;
-        if ((i + 1) % nFreq == 0) {
-            checkPoints[cpIter] = p.placeCheckPoint(cpIter);
-            cpIter++;
-        }
+    //     // placing a checkpoint each nFreq platforms.
+    //     var nFreq = 3;
+    //     if ((i + 1) % nFreq == 0) {
+    //         checkPoints[cpIter] = p.placeCheckPoint(cpIter);
+    //         cpIter++;
+    //     }
 
-        platforms[i] = p;
-    }
+    //     platforms[i] = p;
+    // }
 
-    player = new Player(firstPlatform);
-    player.obj.position = firstPlatform.obj.position.clone();
+    player = new Player(basePlatform);
+    player.obj.position = basePlatform.obj.position.clone();
     player.obj.position.y += 0.3 * 3;
     //player keyboard controls are discontinued
     //player.addControls();
