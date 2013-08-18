@@ -6,6 +6,7 @@ var gameManager = null // shortcut to ace3.defaultActorManager
 var hudManager = null  // in game menu
 var menuManager = null // shortcut to another ActorManager for menus
 var upgradeManager = null //an upgrade menu during game
+var buildManager = null //a build menu during game
 var chooseMapMenuManager = null 
 
 var mainThemeSound = null
@@ -41,39 +42,10 @@ function game_init() {
 
     var posPrec = new THREE.Vector3(0, 0, 0);
     basePlatform = new Platform(posPrec, 400, 0xff0000);
+    basePlatform.ground = true
     basePlatform.setReady();
+
     gameManager.registerActor(basePlatform);
-    // var nPlatforms = 150;
-    // var cpIter = 0;
-    // for (var i=0; i < nPlatforms; i++) {
-    //     var c = GameUtils.getRandomHexColor();
-    //     // var rx = THREE.Math.randFloat(width * 1, width * 2);
-    //     // var rz = THREE.Math.randFloat(width * 1, width * 2);
-    //     // var rxSign = THREE.Math.randInt(0,1) == 0 ? -1:1; 
-    //     // var rzSign = THREE.Math.randInt(0,1) == 0 ? -1:1;
-
-    //     //The distance is constant. So the position of the next plaform 
-    //     //(x, z) is in a circle around the former platform.
-    //     var rAngle = THREE.Math.randFloat(0, Math.PI * 2);
-    //     var rx = dist * Math.cos(rAngle);
-    //     var rz = dist * Math.sin(rAngle);
-
-    //     var p = new Platform(new THREE.Vector3(rx, 0, rz), width, c, 0);
-    //     p.obj.position.add(posPrec);
-    //     p.obj.position.y = (i + 1) * 2.5; // note : the position is not set before, because it must be absolute.
-    //     p.setPickable();
-    //     gameManager.registerActor(p);
-    //     posPrec = p.obj.position;
-
-    //     // placing a checkpoint each nFreq platforms.
-    //     var nFreq = 3;
-    //     if ((i + 1) % nFreq == 0) {
-    //         checkPoints[cpIter] = p.placeCheckPoint(cpIter);
-    //         cpIter++;
-    //     }
-
-    //     platforms[i] = p;
-    // }
 
     player = new Player(basePlatform);
     player.obj.position = basePlatform.obj.position.clone();
@@ -94,7 +66,7 @@ function game_init() {
     cameraFollowLogic.followSpeed = 0.1;
     cameraFollowLogic.run = function() {
         var tp = new THREE.Vector3(player.obj.position.x, 
-                                               player.obj.position.y + 10,   //10
+                                               player.obj.position.y + 30,   //10
                                                player.obj.position.z + 28);  //28
         var cp = ace3.camera.pivot.position;
         if (cp.distanceTo(tp) > 0.3) { 
@@ -117,49 +89,13 @@ function game_init() {
 
     selectorLogic.run = function() {
         var pm = ace3.pickManager
-        // if (ace3.eventManager.mousePressed()) {
-        //     if (this.selectedPlatform != null) {
-        //         this.jumpForce += 1;
-        //         this.info.setValue(this.jumpForce);
-        //     }else if (this.selectedBird != null) {
-
-        //     }else {
-        //         pm.pickActor();
-        //         var p = pm.pickedActor;
-        //         if (p != null) {
-        //             // console.log(p.getType());
-        //             if (p.getType() == 'Platform') {
-        //                 this.selectedPlatform = p;
-        //                 this.jumpForce = 0;
-        //                 player.lookAtXZFixed(this.selectedPlatform.obj.position);
-        //                 player.obj.__dirtyRotation = true;
-        //             }else if (p.getType() == 'Bird') {
-        //                 this.selectedBird = p;
-        //             }
-        //         }
-        //     }
-        // }
-
         if (ace3.eventManager.mouseReleased()) { // 'x'
             pm.pickActor();
             var p = pm.pickedActor;
-            if (p != null) {  
-                // console.log(p.getType());
-                if (p.getType() == 'Platform') {
-                    this.selectedPlatform = p;
-                    player.lookAtXZFixed(this.selectedPlatform.obj.position);
-                    player.obj.__dirtyRotation = true;
-                }else if (p.getType() == 'Bird') {
-                    this.selectedBird = p;
-                }               
+            if (p != null && p.getType() == 'Bird') {
+                this.selectedBird = p;               
             }        
-            if (this.selectedPlatform != null) {
-                // player.jump(this.selectedPlatform, this.jumpForce);
-                player.autoJump(this.selectedPlatform);
-                this.jumpForce = 0;
-                this.selectedPlatform = null;
-                //this.info.setValue("0");
-            }else if (this.selectedBird != null) {
+            if (this.selectedBird != null) {
                 //this.selectedBird.setForRemoval();
                 player.shootAt(this.selectedBird);
                 this.selectedBird = null;
@@ -198,6 +134,7 @@ function game_init() {
 
     defineInGameHUD()
     defineUpgradeManager()
+    defineBuildManager()
     defineMenuManager()
 
 
@@ -219,6 +156,7 @@ function game_run() {
 
 function game_play() {
     upgradeManager.pause();
+    buildManager.pause();
     menuManager.pause()
     gameManager.play()
     if (hudManager) {
@@ -228,6 +166,7 @@ function game_play() {
 
 function game_pause() {
     upgradeManager.pause();
+    buildManager.pause();
     if (hudManager) {
         hudManager.pause()
     }
@@ -241,7 +180,20 @@ function game_upgrades() {
     }
     gameManager.pause()
     menuManager.pause()
-    upgradeManager.play();   
+    buildManager.pause();
+    upgradeManager.play();
+
+}
+
+function game_builds() {
+    if (hudManager) {
+        hudManager.pause()
+    }
+    gameManager.pause()
+    menuManager.pause()
+    upgradeManager.pause(); 
+    buildManager.play();
+ 
 }
 
 
@@ -258,83 +210,9 @@ GameUtils = {
     },
 }
 
-function defineInGameHUD() {
-    mgr = new ACE3.PureHTMLActorManager();
-    //HUD IN GAME ELEMENTS
-    // PAUSE TO MENU BUTTON
-    var escButton = new DefaultGameButton("PAUSE", ace3.getFromRatio(2, 2),
-                            new THREE.Vector2(60, 60), null)
-    escButton.onClickFunction = function() {game_pause()}
-    mgr.registerActor(escButton)
-
-    //PAUSE TO UPGRADE BUTTON
-    var upButton = new DefaultGameButton("UPGRADES", ace3.getFromRatio(70, 2),
-                            new THREE.Vector2(60, 60), null)
-    upButton.onClickFunction = function() {game_upgrades()}
-    mgr.registerActor(upButton)
-
-
-    
-    ace3.actorManagerSet.push(mgr);
-    hudManager = mgr;
-}
-
-function defineMenuManager() {
-    mgr = new ACE3.PureHTMLActorManager();
-    ace3.actorManagerSet.push(mgr);
-    menuManager = mgr;
-}
-
-function defineUpgradeManager() {
-    mgr = new ACE3.PureHTMLActorManager();
-    ace3.actorManagerSet.push(mgr);
-    upgradeManager = mgr;
-
-    var displayInfo = new ACE3.DisplayValue("", "", ace3.getFromRatio(15, 7))
-    displayInfo.separator = ""
-    mgr.registerActor(displayInfo)
-
-    // some properties and functions for all buttons in the upgradegrid
-    function _makeButton(title, indexX, indexY, callbackInfoMessage, onClickFunction) {
-        var b = new DefaultGameButton("UP-W", 
-                                      ace3.getFromRatio(5 + (indexX - 1) * 8, (4 + (indexY -1) * 5)),
-                                      new THREE.Vector2(70, 45), 
-                                      null)
-
-        b.displayInfo = displayInfo
-        b.getInfoMessage = function() {}
-        if (callbackInfoMessage != null) {
-            b.getInfoMessage = callbackInfoMessage;
-        }else {
-            console.warn("Game message : the Default game button [" + title + "] has been defined without info");
-        }
-
-        b.onClickFunction = onClickFunction;
-
-        mgr.registerActor(b)
-        return b
-    }
-
-    _makeButton("UP-W", 1, 1, 
-        function() {return "Upgrade Weapon Power to level " + player.weaponPowerLevel + 1},
-        function() {player.levels.verifyAndUpgrade(player.levels.weaponPower)}
-        );
-    _makeButton("F-UP", 10, 10, 
-        function() {return "Hello Final"},
-        function() {}
-        );
 
 
 
-
-
-
-
-
-
-
-
-}
 
 
 

@@ -18,11 +18,15 @@ Platform = function(vec3pos, width, color, mass) {
 	this.movePositions = [vec3pos]; //array of positions for an eventual moving of the platform during game.
 	this.overrideTime = 100;
 
+	this.ground == false
+
 	this.movePhase = "moveToStart"  //moveToStart = when the platform spawn and move towards the first move position
 	                                //waitingRobotJump = the platform is in place and is waiting the coming of robot
 	                                //ready = the platform is ready to play with robot
 	                                //waitingRobotGo = the platform is waiting that the robot goes away 
 	                                //dismiss = the platform has been kicked away from the game
+
+	this.turrets = [] //array of turrets. The turrets are disposed in radial way. 8 turret max per platform.
 
 }
 
@@ -67,10 +71,18 @@ Platform.prototype.run = function() {
 
 
 	if (this.movePhase == 'dismiss') {
-		// TODO : delete the object , and move it away from screen
+		// For now the object is falling down to the ground.
+		if (this.obj.position.y < 0.5) {
+			this.setForRemoval();
+		}
+
 		return;
 	}
 
+}
+
+Platform.prototype.isWaitingRobotJump = function() {
+	return this.movePhase == 'waitingRobotJump'
 }
 
 /**
@@ -78,9 +90,12 @@ Platform.prototype.run = function() {
 **/
 Platform.prototype.setReady = function() {
 	this.movePhase = 'ready';
-	if (prevPlatform) {
+
+	if (!this.ground) {
 		prevPlatform = currentPlatform;
-		prevPlatform.setDismiss();
+		if (!prevPlatform.ground) {
+			prevPlatform.setDismiss();
+		}
 	}
 	currentPlatform = this;
 	nextPlatform = null;
@@ -88,6 +103,10 @@ Platform.prototype.setReady = function() {
 
 Platform.prototype.setDismiss  = function() {
 	this.movePhase = 'dismiss';
+	this.obj.rotation.z = -0.1
+	this.obj.__dirtyRotation = true
+	this.obj.__dirtyPosition = true
+	this.obj.mass = 0.2
 }
 
 
@@ -110,7 +129,7 @@ Platform.prototype.spawnNextPlatform = function() {
 
     var p = new Platform(initPos, width, c, 0);
 
-    p.setPickable();
+    //p.setPickable();
     gameManager.registerActor(p);
     nextPlatform = p;
 }

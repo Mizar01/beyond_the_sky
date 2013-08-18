@@ -45,6 +45,9 @@ Player = function(firstPlatform) {
     this.rotationSpeed = 0.08;
     this.speed = 0.03;
 
+    this.life = 100;
+    this.energy = 100;
+
     this.verifyStableMax = 4;  //for some iteration i have to verify the velocity to be less 
                                 //to a value to decide to re-enable jumps.
     this.verifyStableCount = this.verifyStableMax;
@@ -57,36 +60,6 @@ Player.extends(ACE3.Actor3D, "Player");
 
 Player.prototype.run = function() {
 
-    // if (this.target != null && this.target.checkPoint != null) {
-    //     var cp = this.target.checkPoint.obj.position;
-    //     if (this.obj.position.distanceTo(cp) < 1) {
-    //         this.basePlatform = this.target;
-    //         var newCPIndex = this.target.checkPoint.index;
-    //         //removes all the previous checkpoints from the scene
-    //         for (var i = this.checkPointIndex + 1; i <= newCPIndex; i++) {
-    //             checkPoints[i].setForRemoval();
-    //         }
-    //         this.checkPointIndex = newCPIndex;
-    //     }
-    // }
-
-    if (this.target != null) {
-        var pf = this.target.obj.position;
-        var pp = this.obj.position;
-        if (pp.distanceTo(pf) < 3 && pp.y > pf.y) {
-            if (this.target.checkPoint != null) {
-                this.checkPointReached();
-            }
-            //this.resetJump(this.target);
-        }
-    }
-
-    if (this.obj.position.y < this.basePlatform.obj.position.y) {
-        player.resetJump(this.basePlatform);
-        this.target = null;            
-    }
-
-
     // this block controls if the player has a poor velocity for 
     // a sequence of iterations. If the player does not verify this 
     // situation, the counter for verifications is reset to Max.
@@ -98,31 +71,24 @@ Player.prototype.run = function() {
             if (this.verifyStableCount <= 0) {
                 this.jumping = false;
                 this.verifyStableCount = this.verifyStableMax;
+                //The jump is complete
+                nextPlatform.setReady();
             }
         }else {
             this.verifyStableCount  = this.verifyStableMax;
         }
+        return;
     }
-    //this.obj.translateZ(this.forceForward);
-    //this.obj.position.y += this.forceVertical;
 
-    //this.forceVertical -= 0.02;
-    //this.forceForward -= 0.005;
-    //if (this.forceForward < 0) {
-    //    this.forceForward = 0;
-    //}
 
-    // if (this.forceVertical < 0 && this.target.obj.position.y > this.obj.position.y + 3) {
-
-    // } else {
-    //     if (this.targetReached()) {
-    //         this.jumping = false;
-    //         this.adjustHeightOnTarget();
-    //         this.basePlatform = this.target;
-    //         this.target = null;
-    //         // this.changeBGColor();
-    //     }
-    // }
+    //Controlling if next platform is waiting for the robot 
+    if (nextPlatform != null && nextPlatform.isWaitingRobotJump()) {
+        this.lookAtXZFixed(nextPlatform.obj.position);
+        this.obj.__dirtyRotation = true;
+        this.autoJump(nextPlatform);
+        this.jumpForce = 0;
+        return;
+    }
 
 }
 
@@ -299,7 +265,8 @@ Player.prototype.addControls = function() {
 */
 function LevelDB() {
 
-    this.exp = 0
+    this.exp = 0 //this is something like money, not real experience, because
+                 // it is lost during an upgrade.
     
     this.weaponPower = new LevelProperty("Weapon Power", 1, 3)
     this.weaponAccuracy = new LevelProperty("Accuracy", 1, 3)
@@ -317,6 +284,8 @@ function LevelDB() {
     this.lifeRegeneration = new LevelProperty("Life Gen", 1, 3)
 
     this.expGain = new LevelProperty("Exp Gain", 1, 3)
+
+    this.energyRegeneration = new LevelProperty("Nrg gen", 1 , 3)
 
     this.canUpgrade = function(lvlProp) {
         return lvlProp.canUpgrade(this.exp);

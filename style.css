@@ -1,0 +1,9 @@
+.bts_button {
+	color: transparent;
+	background-color: transparent;
+	border: none;	
+}
+
+.build_button {
+	background-image: url('media/button_builds.png');
+}
