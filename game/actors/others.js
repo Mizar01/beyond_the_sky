@@ -110,39 +110,52 @@ Laser.prototype.reset = function(vec3Pos) {
     this.needReset = false
 }
 
-CheckPoint = function(vec3pos, index) {
-    ACE3.ParticleActor.call(this, {
-            texture: 'media/particle2.png',
-            size: 2,
-            spread: 0,
-            particleCount: 1,
-        });   
-    this.origin = vec3pos;
-    // NOTE : don't put the lookAt here, put in reset or in run function.
-    this.collisionDistance = 0.5;
-    this.needReset = true;
-    this.index = index;  //index in the checkpointArray
+
+GunTurret = function() {
+    alert("TODO : new turret created")
 }
 
-CheckPoint.extends(ACE3.ParticleActor, "CheckPoint")
 
-CheckPoint.prototype.run = function() {
-    if (this.needReset) {
-        this.reset()
-    }
-    this.obj.rotation.z += 0.1;
-}
 
-CheckPoint.prototype.reset = function(vec3Pos) {
-    //this.duration = 0.3
-    this.hide()
-    var vec3Pos = vec3Pos || this.origin
-    this.obj.position.copy(vec3Pos)
-    for (var pi = 0; pi < this.particleCount; pi++) {
-        var p = this.obj.geometry.vertices[pi]
-        p.copy(new THREE.Vector3(0, 0 , pi * 6))
-    }
-    this.refresh()
-    this.show()
-    this.needReset = false
-}
+// CheckPoint = function(vec3pos, index) {
+//     ACE3.ParticleActor.call(this, {
+//             texture: 'media/particle2.png',
+//             size: 2,
+//             spread: 0,
+//             particleCount: 1,
+//         });   
+//     this.origin = vec3pos;
+//     // NOTE : don't put the lookAt here, put in reset or in run function.
+//     this.collisionDistance = 0.5;
+//     this.needReset = true;
+//     this.index = index;  //index in the checkpointArray
+// }
+
+// CheckPoint.extends(ACE3.ParticleActor, "CheckPoint")
+
+// CheckPoint.prototype.run = function() {
+//     if (this.needReset) {
+//         this.reset()
+//     }
+//     this.obj.rotation.z += 0.1;
+// }
+
+// CheckPoint.prototype.reset = function(vec3Pos) {
+//     //this.duration = 0.3
+//     this.hide()
+//     var vec3Pos = vec3Pos || this.origin
+//     this.obj.position.copy(vec3Pos)
+//     for (var pi = 0; pi < this.particleCount; pi++) {
+//         var p = this.obj.geometry.vertices[pi]
+//         p.copy(new THREE.Vector3(0, 0 , pi * 6))
+//     }
+//     this.refresh()
+//     this.show()
+//     this.needReset = false
+// }
+
+
+
+
+
+

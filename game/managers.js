@@ -1,45 +1,59 @@
 function defineInGameHUD() {
     mgr = new ACE3.PureHTMLActorManager();
-    //HUD IN GAME ELEMENTS
-    // PAUSE TO MENU BUTTON
-    var escButton = new DefaultGameButton("PAUSE", ace3.getFromRatio(2, 2),
-                            new THREE.Vector2(60, 60), null)
-    escButton.onClickFunction = function() {game_pause()}
-    mgr.registerActor(escButton)
-
-    //PAUSE TO UPGRADE BUTTON
-    var upButton = new DefaultGameButton("UPGRADES", ace3.getFromRatio(70, 2),
-                            new THREE.Vector2(60, 60), null)
-    upButton.onClickFunction = function() {game_upgrades()}
-    mgr.registerActor(upButton)
-
-    //the buttons are not labeled
-    var buildButton = new DefaultGameButton("", ace3.getFromRatio(80, 2),
-                            new THREE.Vector2(60, 60), null)
-    buildButton.onClickFunction = function() {game_builds()}
-    buildButton.baseClasses += " bts_button build_button"
-    buildButton.baseCss.backgroundColor = "transparent";
-    buildButton.baseCss.borderRadius = "17px";
-
-
-    console.log("----------------------------------------")
-    console.log($("#" + buildButton.id).attr("style"))
-    console.log(buildButton.baseCss)
-    console.log("----------------------------------------")
-
-    mgr.registerActor(buildButton)
-
-
-
-    
     ace3.actorManagerSet.push(mgr);
     hudManager = mgr;
+
+
+    function _makeHUDButton(ratioX, ratioY, onClickFunction, image) {
+        //the buttons are not labeled
+        var b = new DefaultGameButton("", ace3.getFromRatio(ratioX, ratioY),
+                                new THREE.Vector2(60, 60), null)
+        b.onClickFunction = onClickFunction
+        b.baseCss.backgroundColor = "transparent";
+        b.baseCss.backgroundImage = "url('" + image + "')";
+        b.baseCss.borderRadius = "17px";
+        mgr.registerActor(b)
+        return b
+    }
+
+    //HUD IN GAME ELEMENTS
+    //PAUSE TO MENU BUTTON
+    _makeHUDButton(2, 2, game_pause, "media/button_builds.png")
+    //UPGRADE MENU BUTTON
+    _makeHUDButton(70, 2, game_upgrades, "media/button_builds.png")
+    //BUILD MENU BUTTON
+    _makeHUDButton(80, 2, game_builds, "media/button_builds.png")
+   
+
 }
 
 function defineMenuManager() {
     mgr = new ACE3.PureHTMLActorManager();
     ace3.actorManagerSet.push(mgr);
     menuManager = mgr;
+
+    function _makeMenuButton(title, ratioX, ratioY, onClickFunction, image) {
+        //the buttons are not labeled
+        var b = new DefaultGameButton(title, ace3.getFromRatio(ratioX, ratioY),
+                                new THREE.Vector2(120, 60), null)
+        b.onClickFunction = onClickFunction
+        b.baseCss.backgroundColor = "blue";
+        if (image) {
+            b.baseCss.backgroundImage = "url('" + image + "')";
+        }
+        b.baseCss.borderRadius = "17px";
+        mgr.registerActor(b)
+        return b
+    }
+
+    _makeMenuButton("NEW GAME", 20, 10, game_play)
+    _makeMenuButton("RESUME GAME", 20, 20, game_play)
+    _makeMenuButton("ABOUT", 20, 40, function(){alert("by Mizar (2013)")})
+
+
+
+
+
 }
 
 function defineUpgradeManager() {
@@ -63,7 +77,7 @@ function defineUpgradeManager() {
         if (callbackInfoMessage != null) {
             b.getInfoMessage = callbackInfoMessage;
         }else {
-            console.warn("Game message : the Default game button [" + title + "] has been defined without info");
+            //console.warn("Game message : the Default game button [" + title + "] has been defined without info");
         }
 
         b.onClickFunction = onClickFunction;
@@ -101,7 +115,7 @@ function defineBuildManager() {
     ace3.actorManagerSet.push(mgr);
     buildManager = mgr;
 
-    var displayInfo = new ACE3.DisplayValue("", "", ace3.getFromRatio(15, 7))
+    var displayInfo = new ACE3.DisplayValue("", "", ace3.getFromRatio(15, 93))
     displayInfo.separator = ""
     mgr.registerActor(displayInfo)
 
@@ -117,37 +131,36 @@ function defineBuildManager() {
         if (callbackInfoMessage != null) {
             b.getInfoMessage = callbackInfoMessage;
         }else {
-            console.warn("Game message : the Default game button [" + title + "] has been defined without info");
+            //console.warn("Game message : the Default game button [" + title + "] has been defined without info");
         }
         b.onClickFunction = onClickFunction;
-
-        //static disabling for now
-        b.disableLogic = function() {
-            return this.disabled;
-        }
 
         mgr.registerActor(b)
         return b
     }
 
-    function _makeBuildButton(title, indexX, indexY) {
-        return _makeButton(title, indexX, indexY, 
-            function() {return "Build " + title},
+    function _makeBuildButton(typeName, indexX, indexY) {
+        var b = _makeButton(typeName, indexX, indexY, 
+            function() {return "Build " + typeName},
             function() {
-                var res = currentPlatform.addBuild(title)
+                var res = player.addBuild(typeName)
                 if (res != "") {
                     console.log(res)
                 }else {
                     game_play()
                 }
             }
-        )        
+        )
+        //static disabling for now
+        b.disableLogic = function() {
+            return !player.canBuild(typeName)
+        }
+        return b    
     }
 
-    _makeBuildButton("Tower 1", 1, 1)
-    var bt2 = _makeBuildButton("Tower 2", 2, 1)
-    bt2.disable()
-    _makeBuildButton("Tower 3", 3, 1)
+    _makeBuildButton("GunTurret", 1, 1)
+    _makeBuildButton("IceTurret", 2, 1)
+    _makeBuildButton("LaserTurret", 3, 1)
 
     _makeButton("<-", 10, 12,
         function() {return "Back to game"},

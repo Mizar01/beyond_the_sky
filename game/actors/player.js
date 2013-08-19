@@ -54,6 +54,13 @@ Player = function(firstPlatform) {
 
     //rpg like properties
     this.levels = new LevelDB();
+
+    this.buildTable = {
+        "GunTurret": 100,
+        "IceTurret": 200,
+        "LaserTurret": 300
+    }
+
 }
 
 Player.extends(ACE3.Actor3D, "Player");
@@ -259,6 +266,18 @@ Player.prototype.addControls = function() {
     this.playerControlsLogic = playerControlsLogic;
 }
 
+Player.prototype.canBuild = function(typeName) {
+    return this.energy >= this.buildTable[typeName]
+}
+Player.prototype.addBuild = function(typeName) {
+    if (!this.canBuild) {
+        return "Not enough energy"
+    }
+    var t = new window[typeName]()
+    //TODO : add the building to the current platform
+    return ""
+}
+
 
 /**
    Set of levels for player (or other units as well in some cases)
@@ -294,9 +313,8 @@ function LevelDB() {
     this.verifyAndUpgrade = function(lvlProp) {
         return lvlProp.verifyAndUpgrade(this.exp);
     }
-
-
 }
+
 
 function LevelProperty(name, initLevel, expNeeded) {
     this.name = name;
