@@ -43,7 +43,8 @@ function game_init() {
     var posPrec = new THREE.Vector3(0, 0, 0);
     basePlatform = new Platform(posPrec, 400, 0xff0000);
     basePlatform.ground = true
-    basePlatform.setReady();
+    basePlatform.setReady()
+    basePlatform.overrideTime = 0
 
     gameManager.registerActor(basePlatform);
 
@@ -116,7 +117,30 @@ function game_init() {
         } 
     }
 
+    //Display infos (temporary)
+    var playerLifeInfo = new ACE3.DisplayValue("", "", ace3.getFromRatio(15, 90))
+    playerLifeInfo.valueFunction = function() {
+        return player.life
+    }
+    var playerNrgInfo = new ACE3.DisplayValue("", "", ace3.getFromRatio(15, 93))
+    playerNrgInfo.valueFunction = function() {
+        return player.energy
+    }
+    var playerExpInfo = new ACE3.DisplayValue("", "", ace3.getFromRatio(15, 96))
+    playerExpInfo.valueFunction = function() {
+        return player.levels.exp
+    }
+    var platformOverrideInfo = new ACE3.DisplayValue("", "", ace3.getFromRatio(15, 98))
+    platformOverrideInfo.valueFunction = function() {
+        return currentPlatform.overrideTime
+    }
 
+
+
+    gameManager.registerActor(playerLifeInfo)
+    gameManager.registerActor(playerNrgInfo)
+    gameManager.registerActor(playerExpInfo)
+    gameManager.registerActor(platformOverrideInfo)
 
     gameManager.registerLogic(cameraFollowLogic);
     gameManager.registerLogic(selectorLogic);

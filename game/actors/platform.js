@@ -58,7 +58,7 @@ Platform.prototype.run = function() {
 			this.spawnNextPlatform();
 			this.movePhase = 'waitingRobotGo';
 		}else {
-			this.overrideTime--;
+			//this.overrideTime--;
 			// TODO : move eventually trough rally points (array of movePositions)
 		}
 		return;

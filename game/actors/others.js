@@ -35,16 +35,15 @@ Bird.prototype.run = function() {
 Bird.prototype.getDamage = function(qta) {
 	this.life -= qta;
 	if (this.life <= 0) {
+        player.addExp(10)
+        currentPlatform.overrideTime--
 		this.setForRemoval();
 	}
 }
 
 
 
-/**
-* The satellite shot is directly owned by player.
-*/
-Laser = function(owner, target) {
+Bullet = function(owner, target, damage) {
     ACE3.ParticleActor.call(this, {
             texture: 'media/particle2.png',
             size: 2,
@@ -63,10 +62,12 @@ Laser = function(owner, target) {
     this.needReset = true;
     this.timeToLive = 3; //seconds
     this.startTime = ace3.time.frameTime;
-}
-Laser.extends(ACE3.ParticleActor, "Laser")
+    this.damage = damage
 
-Laser.prototype.run = function() {
+}
+Bullet.extends(ACE3.ParticleActor, "Bullet")
+
+Bullet.prototype.run = function() {
     if (this.needReset) {
         this.reset()
     }
@@ -87,11 +88,11 @@ Laser.prototype.run = function() {
 
 }
 
-Laser.prototype.damageTarget = function() {
-	this.target.getDamage(this.owner.damage);
+Bullet.prototype.damageTarget = function() {
+	this.target.getDamage(this.damage);
 }
 
-Laser.prototype.reset = function(vec3Pos) {
+Bullet.prototype.reset = function(vec3Pos) {
     //this.duration = 0.3
     this.hide()
     var vec3Pos = vec3Pos || this.origin

@@ -37,7 +37,6 @@ Player = function(firstPlatform) {
     this.basePlatform = firstPlatform;
     this.checkPointIndex = -1;
     this.damage = 5;
-    this.precision = 50; // percentage
     this.cooldown = 0.5; 
     this.currentCooldown = 0;
     this.playerControlsLogic = null;
@@ -53,12 +52,15 @@ Player = function(firstPlatform) {
     this.verifyStableCount = this.verifyStableMax;
 
     //rpg like properties
-    this.levels = new LevelDB();
+    this.levels = new LevelDB(this);
 
-    this.buildTable = {
+    this.buildCostTable = {
         "GunTurret": 100,
         "IceTurret": 200,
-        "LaserTurret": 300
+        "LaserTurret": 300,
+        "DefenseDrone": 500,
+        "HealingDrone": 700,
+        "EnergyShield": 1000,
     }
 
 }
@@ -228,14 +230,21 @@ Player.prototype.lookAtXZFixed = function(targetPos) {
 }
 
 Player.prototype.shootAt = function(target) {
-    gameManager.registerActor(new Laser(this, target));
+    gameManager.registerActor(new Bullet(this, target, this.getWeaponPower()));
 }
 
 Player.prototype.getPrecisionRandomnessAngle = function() {
     // a vector 0,0,0 it's the 100% precision !
-    var randPrecision = THREE.Math.randInt(0, 50) + this.precision;
+    var randPrecision = THREE.Math.randInt(0, 50) + this.levels.weaponAccuracy.level * 20;
+    if (randPrecision > 100) {
+        return 0
+    }
     var maxOut = Math.PI/8; // this should happens if randomPrecision is 0
     return maxOut - randPrecision/100 * maxOut; // value between 0 and maxOut
+}
+
+Player.prototype.getWeaponPower = function() {
+    return this.levels.weaponPower.level/2
 }
 
 Player.prototype.addControls = function() {
@@ -267,7 +276,7 @@ Player.prototype.addControls = function() {
 }
 
 Player.prototype.canBuild = function(typeName) {
-    return this.energy >= this.buildTable[typeName]
+    return this.energy >= this.buildCostTable[typeName]
 }
 Player.prototype.addBuild = function(typeName) {
     if (!this.canBuild) {
@@ -278,11 +287,25 @@ Player.prototype.addBuild = function(typeName) {
     return ""
 }
 
+Player.prototype.canUpgrade = function(lvlProp) {
+    return this.levels.canUpgrade(lvlProp)
+}
+Player.prototype.verifyAndUpgrade = function(lvlProp) {
+    return this.levels.verifyAndUpgrade(lvlProp)
+}
+
+Player.prototype.addExp = function(exp) {
+    this.levels.exp += exp
+}
+
+
 
 /**
    Set of levels for player (or other units as well in some cases)
 */
-function LevelDB() {
+function LevelDB(owner) {
+
+    this.owner = owner
 
     this.exp = 0 //this is something like money, not real experience, because
                  // it is lost during an upgrade.
@@ -297,7 +320,7 @@ function LevelDB() {
 
     this.turretPower = new LevelProperty("Turret Fire Power", 1, 3)
     this.turretRate = new LevelProperty("Turret Fire Rate", 1, 3)
-    this.turretMax = new LevelProperty("Max no. of turrets", 0, 10)
+    this.turretSlots = new LevelProperty("Max no. of turrets", 0, 10, 8)
 
     this.life = new LevelProperty("Life", 1, 3)
     this.lifeRegeneration = new LevelProperty("Life Gen", 1, 3)
@@ -311,18 +334,28 @@ function LevelDB() {
     }
 
     this.verifyAndUpgrade = function(lvlProp) {
-        return lvlProp.verifyAndUpgrade(this.exp);
+        var expTaken = lvlProp.verifyAndUpgrade(this.exp);
+        if (expTaken != -1) {
+            this.exp -= expTaken
+        }
+        return expTaken
     }
 }
 
 
-function LevelProperty(name, initLevel, expNeeded) {
+function LevelProperty(name, initLevel, expNeeded, levelMax) {
     this.name = name;
     this.level = initLevel;
     this.expNeeded = expNeeded;
+    this.levelMax = levelMax || "INF"; //an integer or "INF"
+    this.maxReached = false;
+    //this.owner = owner
+    //this.defaultProperty = defaultProperty //the owner["property"] that will change
 
     this.canUpgrade = function(exp) {
-        return this.expNeeded <= exp;
+        //TODO : for tests now it returns always true
+        return true && !this.maxReached
+        //return this.expNeeded <= exp;
     }
 
     /**
@@ -331,14 +364,26 @@ function LevelProperty(name, initLevel, expNeeded) {
     */
     this.verifyAndUpgrade = function(exp) {
         if (this.canUpgrade(exp)) {
-            this.level++;
-            var expTaken = this.expNeeded;
-            this.expNeeded = this.getExpForNextLevel();
-            return expTaken;
+            return this.upgrade()
         }else {
             return -1;
         }
     }
+
+    this.upgrade = function() {
+        this.level++;
+        if (this.levelMax != 'INF' && this.level >= this.levelMax) {
+            this.maxReached = true       
+        }
+        var expTaken = this.expNeeded;
+        this.expNeeded = this.getExpForNextLevel();
+        this.upgradeAction()
+        return expTaken;
+    }
+
+    //this must be implemented by specific level property
+    //for the most of the time
+    this.upgradeAction = function() { }
 
     /**
      A formula used to calculate the experience needed for a particular

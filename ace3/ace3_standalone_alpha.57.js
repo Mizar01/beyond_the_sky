@@ -1514,6 +1514,12 @@ ACE3.HTMLButton.prototype.buildContent = function() {
     return s 
 }
 
+ACE3.HTMLButton.prototype.changeLabel = function(newLabel) {
+    this.label = newLabel
+    $("#" + this.id).html(this.label)
+}
+
+
 /**
 * This is the class for the default action button in the game. The
 * run() function is managing some situations to decide whether to 

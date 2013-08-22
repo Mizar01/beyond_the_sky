@@ -66,20 +66,17 @@ function defineUpgradeManager() {
     mgr.registerActor(displayInfo)
 
     // some properties and functions for all buttons in the upgradegrid
-    function _makeButton(title, indexX, indexY, callbackInfoMessage, onClickFunction) {
+    function _makeButton(title, indexX, indexY, onClickFunction, callbackInfoMessage) {
         var b = new DefaultGameButton(title, 
-                                      ace3.getFromRatio(5 + (indexX - 1) * 8, (4 + (indexY -1) * 5)),
-                                      new THREE.Vector2(70, 45), 
+                                      ace3.getFromRatio(5 + (indexX - 1) * 8, (4 + (indexY -1) * 15)),
+                                      new THREE.Vector2(70, 70), 
                                       null)
 
         b.displayInfo = displayInfo
         b.getInfoMessage = function() {}
         if (callbackInfoMessage != null) {
             b.getInfoMessage = callbackInfoMessage;
-        }else {
-            //console.warn("Game message : the Default game button [" + title + "] has been defined without info");
         }
-
         b.onClickFunction = onClickFunction;
 
         //static disabling for now
@@ -91,17 +88,46 @@ function defineUpgradeManager() {
         return b
     }
 
-    _makeButton("UP-W", 1, 1, 
-        function() {return "Upgrade Weapon Power to level " + player.weaponPowerLevel + 1},
-        function() {player.levels.verifyAndUpgrade(player.levels.weaponPower)}
-        );
-    _makeButton("F-UP", 10, 10, 
-        function() {return "Hello Final"},
+    function _makeLevelUpButton(levProp, gridX, gridY) {
+
+        //build strings from levProp
+        var lp = player.levels[levProp]
+        var upgradeStr = lp.name + "<br/><b>[" + lp.level + "]</b>"
+
+        var b = _makeButton(upgradeStr,gridX, gridY, 
+            function() { 
+                        player.levels.verifyAndUpgrade(lp)
+                        upgradeStr = lp.name + "<br/><b>[" + lp.level + "]</b>"
+                        if (lp.levelMax != 'INF') {
+                            upgradeStr = lp.name + "<br/><b>[" + lp.level + "/" + lp.levelMax + "]</b>"
+                        }
+                        this.changeLabel(upgradeStr)
+                       }
+            );
+        b.disableLogic = function() {
+            return !player.canUpgrade(lp) 
+        }
+
+        return b;
+    } 
+
+    _makeLevelUpButton("weaponPower", 1, 1)
+    _makeLevelUpButton("weaponAccuracy", 2, 1)
+    _makeLevelUpButton("weaponRate", 3, 1)
+
+    _makeLevelUpButton("turretPower", 1, 2)
+    _makeLevelUpButton("turretRate", 2, 2)
+    _makeLevelUpButton("turretSlots", 3, 2)
+
+    _makeLevelUpButton("shieldMax", 1, 3)
+    _makeLevelUpButton("shieldRegeneration", 2, 3)
+    _makeLevelUpButton("shieldStrength", 3, 3)
+
+    _makeButton("F-UP", 10, 5, 
         function() {}
         );
 
-    _makeButton("<-", 10, 12,
-        function() {return "Back to game"},
+    _makeButton("<-", 10, 6,
         function() {game_play()}
     );
 
@@ -130,8 +156,6 @@ function defineBuildManager() {
         b.getInfoMessage = function() {}
         if (callbackInfoMessage != null) {
             b.getInfoMessage = callbackInfoMessage;
-        }else {
-            //console.warn("Game message : the Default game button [" + title + "] has been defined without info");
         }
         b.onClickFunction = onClickFunction;
 
@@ -161,6 +185,8 @@ function defineBuildManager() {
     _makeBuildButton("GunTurret", 1, 1)
     _makeBuildButton("IceTurret", 2, 1)
     _makeBuildButton("LaserTurret", 3, 1)
+    _makeBuildButton("DefenderDrone", 4, 1)
+    _makeBuildButton("HealingDrone", 5, 1)
 
     _makeButton("<-", 10, 12,
         function() {return "Back to game"},
