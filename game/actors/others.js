@@ -114,6 +114,9 @@ Bullet.prototype.reset = function(vec3Pos) {
 
 GunTurret = function() {
     alert("TODO : new turret created")
+    this.place = function(platform, vec2pos) {
+        console.log("Gun Turret built on [" + vec2pos.x + "," + vec2pos.y + "]")
+    }
 }
 
 

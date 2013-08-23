@@ -276,15 +276,19 @@ Player.prototype.addControls = function() {
 }
 
 Player.prototype.canBuild = function(typeName) {
-    return this.energy >= this.buildCostTable[typeName]
+    var usedSlots = currentPlatform.getUsedSlots()
+    if (usedSlots < 8 && 
+        usedSlots < this.levels.turretSlots.level &&
+        this.energy >= this.buildCostTable[typeName]){
+        return true
+    }
+    return false
 }
 Player.prototype.addBuild = function(typeName) {
     if (!this.canBuild) {
         return "Not enough energy"
     }
-    var t = new window[typeName]()
-    //TODO : add the building to the current platform
-    return ""
+    return currentPlatform.addBuild(typeName, this)
 }
 
 Player.prototype.canUpgrade = function(lvlProp) {

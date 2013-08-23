@@ -26,7 +26,7 @@ Platform = function(vec3pos, width, color, mass) {
 	                                //waitingRobotGo = the platform is waiting that the robot goes away 
 	                                //dismiss = the platform has been kicked away from the game
 
-	this.turrets = [] //array of turrets. The turrets are disposed in radial way. 8 turret max per platform.
+	this.buildingSlots = new Array(8) //array of buiding slots. For now there are only 8 slots
 
 }
 
@@ -132,6 +132,55 @@ Platform.prototype.spawnNextPlatform = function() {
     //p.setPickable();
     gameManager.registerActor(p);
     nextPlatform = p;
+}
+
+Platform.prototype.getUsedSlots = function() {
+	var c = 0
+	for (var i = 0; i < this.buildingSlots.length; i++) {
+		if (this.buildingSlots[i] != null) {
+			c++
+		}
+	}
+	return c
+}
+
+Platform.prototype.getFreeSlot = function() {
+	for (var i = 0; i < this.buildingSlots.length; i++) {
+		if (this.buildingSlots[i] == null) {
+			return i
+		}
+	}
+	return -1
+}
+
+Platform.prototype.getSlotPosition = function(index) {
+	var pos = [ new THREE.Vector2(-1, -1),
+				new THREE.Vector2(-1, 0),
+				new THREE.Vector2(-1, 1),
+				new THREE.Vector2(0, -1),
+				new THREE.Vector2(0, 1),
+				new THREE.Vector2(1, -1),
+				new THREE.Vector2(-1, 0),
+				new THREE.Vector2(-1, 1)
+			   ]
+	return pos[index]
+
+}
+
+
+Platform.prototype.addBuild = function(typeName, owner) {
+
+	var iFreeSlot = this.getFreeSlot()
+	if (iFreeSlot != -1) {
+		var bPos = this.getSlotPosition(iFreeSlot)
+		var b = new window[typeName](owner)
+		b.place(this, bPos)
+		this.buildingSlots[iFreeSlot] = b
+	}else {
+		console.log("WARNING: no free slots available.")
+	}
+
+
 }
 
 
