@@ -58,7 +58,7 @@ Platform.prototype.run = function() {
 			this.spawnNextPlatform();
 			this.movePhase = 'waitingRobotGo';
 		}else {
-			//this.overrideTime--;
+			this.overrideTime-=.5;
 			// TODO : move eventually trough rally points (array of movePositions)
 		}
 		return;
@@ -114,8 +114,8 @@ Platform.prototype.setDismiss  = function() {
 * Spawns a brand new platform after this one
 **/
 Platform.prototype.spawnNextPlatform = function() {
-	var width = 4
-    var dist = 5.5; //x,z distance between sequential platforms
+	var width = 8;
+    var dist = 11; //x,z distance between sequential platforms
     var c = GameUtils.getRandomHexColor();
     //The distance is constant. So the position of the next plaform 
     //(x, z) is in a circle around the former platform.

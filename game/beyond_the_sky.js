@@ -67,10 +67,10 @@ function game_init() {
     cameraFollowLogic.followSpeed = 0.1;
     cameraFollowLogic.run = function() {
         var tp = new THREE.Vector3(player.obj.position.x, 
-                                               player.obj.position.y + 30,   //10
-                                               player.obj.position.z + 28);  //28
+                                               player.obj.position.y + 13,   //10
+                                               player.obj.position.z + 18);  //28
         var cp = ace3.camera.pivot.position;
-        if (cp.distanceTo(tp) > 0.3) { 
+        if (cp.distanceTo(tp) > 0.6) { 
             var d = ACE3.Math.getDirection(cp, tp);
             cp.add(d.multiplyScalar(this.followSpeed)); 
         } else {
@@ -118,21 +118,21 @@ function game_init() {
     }
 
     //Display infos (temporary)
-    var playerLifeInfo = new ACE3.DisplayValue("", "", ace3.getFromRatio(15, 90))
+    var playerLifeInfo = new ACE3.DisplayValue("LIFE", "", ace3.getFromRatio(15, 97))
     playerLifeInfo.valueFunction = function() {
-        return player.life
+        return "" + player.life
     }
-    var playerNrgInfo = new ACE3.DisplayValue("", "", ace3.getFromRatio(15, 93))
+    var playerNrgInfo = new ACE3.DisplayValue("NRG", "", ace3.getFromRatio(35, 97))
     playerNrgInfo.valueFunction = function() {
-        return player.energy
+        return "" + player.energy
     }
-    var playerExpInfo = new ACE3.DisplayValue("", "", ace3.getFromRatio(15, 96))
+    var playerExpInfo = new ACE3.DisplayValue("XP", "", ace3.getFromRatio(55, 97))
     playerExpInfo.valueFunction = function() {
-        return player.levels.exp
+        return "" + player.levels.exp
     }
-    var platformOverrideInfo = new ACE3.DisplayValue("", "", ace3.getFromRatio(15, 98))
+    var platformOverrideInfo = new ACE3.DisplayValue("override progress", "", ace3.getFromRatio(75, 97))
     platformOverrideInfo.valueFunction = function() {
-        return currentPlatform.overrideTime
+        return "" + currentPlatform.overrideTime
     }
 
 

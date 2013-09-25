@@ -91,7 +91,7 @@ Player.prototype.run = function() {
 
 
     //Controlling if next platform is waiting for the robot 
-    if (nextPlatform != null && nextPlatform.isWaitingRobotJump()) {
+    if (nextPlatform != null && nextPlatform.isWaitingRobotJump() && !this.jumping) {
         this.lookAtXZFixed(nextPlatform.obj.position);
         this.obj.__dirtyRotation = true;
         this.autoJump(nextPlatform);
@@ -184,7 +184,7 @@ Player.prototype.jump = function(platform, force) {
         //var px = platform.obj.position.x;
 
         // adjust angle
-        var fakeHeightAdded = 10;
+        var fakeHeightAdded = 18;
         var tvpos = platform.obj.position.clone().add(new THREE.Vector3(0, fakeHeightAdded, 0));
         var dir = ACE3.Math.getDirection(this.obj.position, tvpos);
         this.forceForward = force / 4;
@@ -204,7 +204,7 @@ Player.prototype.jump = function(platform, force) {
 */
 Player.prototype.autoJump = function(platform) {
     if (!this.jumping) {
-        var forceRatio = 38;
+        var forceRatio = 48;
         //console.log("forceRatio:" + forceRatio);
 
         // var dist = this.obj.position.distanceTo(platform.obj.position);
