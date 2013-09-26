@@ -123,10 +123,6 @@ function defineUpgradeManager() {
     _makeLevelUpButton("shieldRegeneration", 2, 3)
     _makeLevelUpButton("shieldStrength", 3, 3)
 
-    _makeButton("F-UP", 10, 5, 
-        function() {}
-        );
-
     _makeButton("<-", 10, 6,
         function() {game_play()}
     );
@@ -148,7 +144,7 @@ function defineBuildManager() {
     // some properties and functions for all buttons in the build grid
     function _makeButton(title, indexX, indexY, callbackInfoMessage, onClickFunction) {
         var b = new DefaultGameButton(title, 
-                                      ace3.getFromRatio(5 + (indexX - 1) * 8, (4 + (indexY -1) * 5)),
+                                      ace3.getFromRatio(5 + (indexX - 1) * 8, (4 + (indexY -1) * 15)),
                                       new THREE.Vector2(70, 45), 
                                       null)
 
@@ -185,10 +181,12 @@ function defineBuildManager() {
     _makeBuildButton("GunTurret", 1, 1)
     _makeBuildButton("IceTurret", 2, 1)
     _makeBuildButton("LaserTurret", 3, 1)
-    _makeBuildButton("DefenderDrone", 4, 1)
-    _makeBuildButton("HealingDrone", 5, 1)
+    _makeBuildButton("MissileTurret", 4, 1)
 
-    _makeButton("<-", 10, 12,
+    _makeBuildButton("DefenderDrone", 1, 2)
+    _makeBuildButton("HealingDrone", 2, 2)
+
+    _makeButton("<-", 10, 6,
         function() {return "Back to game"},
         function() {game_play()}
     )

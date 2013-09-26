@@ -111,13 +111,44 @@ Bullet.prototype.reset = function(vec3Pos) {
     this.needReset = false
 }
 
+Turret = function(height, hexColor, textureJpg) {
+    ACE3.Actor3D.call(this);
+    this.height = height || 2
+    this.uniform = ACE3.Utils.getStandardUniform()
+    this.uniform.color.value = ACE3.Utils.getVec3Color(hexColor) || ACE3.Utils.getVec3Color(0xffffff)
+    this.texture = textureJpg || "media/tower.jpg"
+    this.uniform.texture1 = {type: 't', value: THREE.ImageUtils.loadTexture( this.texture )}
+    var g = new THREE.CylinderGeometry(0.5, 0.7, this.height)  //high base, low base, height  
+    this.obj = ACE3.Utils.getStandardShaderMesh(this.uniform, "generic", "fragmentShaderTower", g)
+}
+
+Turret.extends(ACE3.Actor3D, "Turret")
+
+
+Turret.prototype.place = function(platform, vec2pos) {
+    var pp = platform.obj.position;
+    this.obj.position.set(vec2pos.x, this.height/2, vec2pos.y)
+}
 
 GunTurret = function() {
-    alert("TODO : new turret created")
-    this.place = function(platform, vec2pos) {
-        console.log("Gun Turret built on [" + vec2pos.x + "," + vec2pos.y + "]")
-    }
+    Turret.call(this, 1, 0xff0000)
 }
+GunTurret.extends(Turret, "GunTurret")
+
+LaserTurret = function() {
+    Turret.call(this, 1, 0xffffaa)
+}
+LaserTurret.extends(Turret, "LaserTurret")
+
+MissileTurret = function() {
+    Turret.call(this, 1, 0xff00ff)
+}
+MissileTurret.extends(Turret, "MissileTurret")
+
+IceTurret = function() {
+    Turret.call(this, 1, 0x0000ff)
+}
+IceTurret.extends(Turret, "IceTurret")
 
 
 

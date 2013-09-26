@@ -58,7 +58,7 @@ Platform.prototype.run = function() {
 			this.spawnNextPlatform();
 			this.movePhase = 'waitingRobotGo';
 		}else {
-			this.overrideTime-=.5;
+			//this.overrideTime-=.5;
 			// TODO : move eventually trough rally points (array of movePositions)
 		}
 		return;
@@ -160,10 +160,10 @@ Platform.prototype.getSlotPosition = function(index) {
 				new THREE.Vector2(0, -1),
 				new THREE.Vector2(0, 1),
 				new THREE.Vector2(1, -1),
-				new THREE.Vector2(-1, 0),
-				new THREE.Vector2(-1, 1)
+				new THREE.Vector2(1, 0),
+				new THREE.Vector2(1, 1)
 			   ]
-	return pos[index]
+	return pos[index].multiplyScalar(this.width/3)
 
 }
 
@@ -174,10 +174,14 @@ Platform.prototype.addBuild = function(typeName, owner) {
 	if (iFreeSlot != -1) {
 		var bPos = this.getSlotPosition(iFreeSlot)
 		var b = new window[typeName](owner)
+		this.addActor(b)
 		b.place(this, bPos)
 		this.buildingSlots[iFreeSlot] = b
+		test_object = b
+		return "OK"
 	}else {
 		console.log("WARNING: no free slots available.")
+		return -1
 	}
 
 

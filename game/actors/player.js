@@ -45,7 +45,7 @@ Player = function(firstPlatform) {
     this.speed = 0.03;
 
     this.life = 100;
-    this.energy = 100;
+    this.energy = 10000;
 
     this.verifyStableMax = 4;  //for some iteration i have to verify the velocity to be less 
                                 //to a value to decide to re-enable jumps.
@@ -58,6 +58,7 @@ Player = function(firstPlatform) {
         "GunTurret": 100,
         "IceTurret": 200,
         "LaserTurret": 300,
+        "MissileTurret": 400,
         "DefenseDrone": 500,
         "HealingDrone": 700,
         "EnergyShield": 1000,
@@ -285,7 +286,7 @@ Player.prototype.canBuild = function(typeName) {
     return false
 }
 Player.prototype.addBuild = function(typeName) {
-    if (!this.canBuild) {
+    if (!this.canBuild(typeName)) {
         return "Not enough energy"
     }
     return currentPlatform.addBuild(typeName, this)
@@ -311,7 +312,7 @@ function LevelDB(owner) {
 
     this.owner = owner
 
-    this.exp = 0 //this is something like money, not real experience, because
+    this.exp = 1000 //this is something like money, not real experience, because
                  // it is lost during an upgrade.
     
     this.weaponPower = new LevelProperty("Weapon Power", 1, 3)
@@ -324,7 +325,7 @@ function LevelDB(owner) {
 
     this.turretPower = new LevelProperty("Turret Fire Power", 1, 3)
     this.turretRate = new LevelProperty("Turret Fire Rate", 1, 3)
-    this.turretSlots = new LevelProperty("Max no. of turrets", 0, 10, 8)
+    this.turretSlots = new LevelProperty("Max no. of turrets", 8, 10, 8)
 
     this.life = new LevelProperty("Life", 1, 3)
     this.lifeRegeneration = new LevelProperty("Life Gen", 1, 3)

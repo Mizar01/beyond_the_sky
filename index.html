@@ -63,8 +63,28 @@
                 opacity = 1.0;
                 gl_FragColor = vec4(c, opacity);
               }
+      </script>
+      <script id="fragmentShaderTower" type="x-shader/x-fragment">
+              uniform vec2 resolution;
+              uniform float time;
+              uniform float dist;
+              uniform float tickness;
+              uniform vec3 color;
+              varying vec2 vUv;
+              uniform sampler2D texture1;
+
+              void main(void) {
+                float cycle = mod((time * 100.0), 1000.0) / 1000.0; //number between 0 and 1 , cyclical in theory
+                gl_FragColor = texture2D(texture1, vUv);
+                float th = 0.80;
+                if (gl_FragColor.x > th && gl_FragColor.y > th && gl_FragColor.z > th) {
+                  gl_FragColor = vec4(color, 1.0);
+                }
+                //gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0);
+              }
 
       </script>
+
 </head>
 <body>
       <audio id='main_theme'>

@@ -2,6 +2,7 @@
 
 var ace3 = null
 var test_logic = null
+var test_object = null
 var gameManager = null // shortcut to ace3.defaultActorManager
 var hudManager = null  // in game menu
 var menuManager = null // shortcut to another ActorManager for menus
