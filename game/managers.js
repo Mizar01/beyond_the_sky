@@ -165,7 +165,7 @@ function defineBuildManager() {
             function() {
                 var res = player.addBuild(typeName)
                 if (res != "") {
-                    console.log(res)
+                    //console.log(res)
                 }else {
                     game_play()
                 }

@@ -236,6 +236,42 @@ GameUtils = {
 }
 
 
+// TODO : add to the ace3 source code !!!!
+
+ACE3.CooldownTimer = function(cooldownTime) {
+    this.maxTime = cooldownTime
+    this.time = cooldownTime
+}
+
+ACE3.CooldownTimer.prototype.trigger = function() {
+    this.time -= _ace3.time.frameDelta
+    if (this.time <= 0) {
+        // TRIGGER AND RESET COOLDOWN
+        this.time = this.maxTime
+        return true
+    }else {
+        return false
+    }
+}
+
+ACE3.Actor3D.prototype.getWorldCoords = function() {
+    var wc = new THREE.Vector3(0, 0, 0)
+    return this.obj.localToWorld(wc)
+}
+
+
+ACE3.Test = []
+
+ACE3.Test.makeTestCube = function(position, color){
+    var color = color || 0xffffff
+    var obj = ACE3.Builder.cube(1, color)
+    obj.position = position
+    _ace3.scene.add(obj)
+
+    return obj
+}
+
+
 
 
 

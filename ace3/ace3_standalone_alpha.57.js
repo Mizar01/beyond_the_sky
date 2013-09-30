@@ -703,7 +703,7 @@ ACE3.Logic.prototype = {
 
 /**
 * This is a wrapper for the Clock and it stores the elapsed time between frames.
-* Actually it can't be used as a contextual timer (so the time is always going on for
+* Actually it CAN'T (!!) be used as a contextual timer (so the time is always going on for
 * every Actor/Manager, even if they are paused)
 */
 
@@ -721,7 +721,6 @@ ACE3.TimeManager.prototype.run = function() {
 	this.frameDelta = this.clock.getDelta()
 	this.frameTime = this.clock.getElapsedTime()
 }
-
 
 // TODO : create a new special object called ACE3.Timer used for contextual management of 
 // managers. All the actors must read the relative time from their manager, or in other

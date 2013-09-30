@@ -17,6 +17,8 @@ Bird = function() {
 
 	this.life = 10;
 
+    this.isEnemy = true
+
 
 }
 
@@ -54,7 +56,7 @@ Bullet = function(owner, target, damage, accuracyPerc) {
     this.ownerName = owner.name 
     this.target = target
 
-    var tp = owner.obj.position;
+    var tp = owner.getWorldCoords()
     this.origin = tp.clone();
     // NOTE : don't put the lookAt here, put in reset or in run function.
     this.collisionDistance = 0.5;
@@ -129,23 +131,66 @@ Bullet.prototype.reset = function(vec3Pos) {
     this.needReset = false
 }
 
-Turret = function(height, hexColor, textureJpg) {
+Turret = function(height, hexColor, textureJpg, owner) {
     ACE3.Actor3D.call(this);
     this.height = height || 2
+    this.owner = owner || player
     this.uniform = ACE3.Utils.getStandardUniform()
     this.uniform.color.value = ACE3.Utils.getVec3Color(hexColor) || ACE3.Utils.getVec3Color(0xffffff)
     this.texture = textureJpg || "media/tower.jpg"
     this.uniform.texture1 = {type: 't', value: THREE.ImageUtils.loadTexture( this.texture )}
     var g = new THREE.CylinderGeometry(0.5, 0.7, this.height)  //high base, low base, height  
     this.obj = ACE3.Utils.getStandardShaderMesh(this.uniform, "generic", "fragmentShaderTower", g)
+    this.cooldown = new ACE3.CooldownTimer(this.calculateCooldown())
+    this.targetEnemy = null
+    this.power = this.calculatePower()
 }
 
 Turret.extends(ACE3.Actor3D, "Turret")
 
+Turret.prototype.calculateCooldown = function() {
+    return Math.max(1,5 - this.owner.levels.turretRate.level)
+}
+Turret.prototype.calculatePower = function() {
+    return this.owner.levels.turretPower.level
+}
 
 Turret.prototype.place = function(platform, vec2pos) {
     var pp = platform.obj.position;
     this.obj.position.set(vec2pos.x, this.height/2, vec2pos.y)
+}
+
+Turret.prototype.run = function() {
+    var canFire = this.cooldown.trigger()
+    var te = this.targetEnemy
+    //console.log(canFire)
+    if (canFire) {
+        if (te != null && te.alive) {
+            this.shoot(te)
+            return
+        }
+
+        //here the enemy is not set or is dead
+        this.targetEnemy = null
+        if (this.owner != null) {
+            this.targetEnemy = this.findNearestTarget()
+        }
+    }
+    this.obj.rotation.y += 0.003
+}
+
+Turret.prototype.findNearestTarget = function() {
+    for (ia in gameManager.actors) {
+        var a = gameManager.actors[ia]
+        if (a.isEnemy && a.alive) {
+            return a
+        }
+    }
+}
+
+Turret.prototype.shoot = function(target) {
+    this.lookAtXZFixed(target.obj.position)
+    gameManager.registerActor(new Bullet(this, target, this.power));
 }
 
 GunTurret = function() {

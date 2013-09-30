@@ -305,6 +305,13 @@ Player.prototype.addExp = function(exp) {
     this.levels.exp += exp
 }
 
+/**
+* Overwrites the default behaviour
+*/
+Player.prototype.getWorldCoords = function() {
+    return this.obj.position
+}
+
 
 
 /**
@@ -318,14 +325,14 @@ function LevelDB(owner) {
                  // it is lost during an upgrade.
     
     this.weaponPower = new LevelProperty("Weapon Power", 1, 3)
-    this.weaponAccuracy = new LevelProperty("Accuracy", 1, 3)
+    this.weaponAccuracy = new LevelProperty("Accuracy", 1, 10)
     this.weaponRate = new LevelProperty("Fire Rate", 1, 3)
 
     this.shieldMax = new LevelProperty("Shield Max Capacity", 1, 3)
     this.shieldRegeneration = new LevelProperty("Shield Gen", 1, 3)
     this.shieldStrength = new LevelProperty("Shield Repulsion", 1, 3)
 
-    this.turretPower = new LevelProperty("Turret Fire Power", 1, 3)
+    this.turretPower = new LevelProperty("Turret Fire Power", 1, 10)
     this.turretRate = new LevelProperty("Turret Fire Rate", 1, 3)
     this.turretSlots = new LevelProperty("Max no. of turrets", 8, 10, 8)
 
