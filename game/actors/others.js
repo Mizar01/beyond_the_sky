@@ -43,7 +43,7 @@ Bird.prototype.getDamage = function(qta) {
 
 
 
-Bullet = function(owner, target, damage) {
+Bullet = function(owner, target, damage, accuracyPerc) {
     ACE3.ParticleActor.call(this, {
             texture: 'media/particle2.png',
             size: 2,
@@ -63,6 +63,7 @@ Bullet = function(owner, target, damage) {
     this.timeToLive = 3; //seconds
     this.startTime = ace3.time.frameTime;
     this.damage = damage
+    this.accuracy = accuracyPerc || 100
 
 }
 Bullet.extends(ACE3.ParticleActor, "Bullet")
@@ -89,7 +90,23 @@ Bullet.prototype.run = function() {
 }
 
 Bullet.prototype.damageTarget = function() {
-	this.target.getDamage(this.damage);
+    //evaluate the random accuracy
+    var maxDiff = this.accuracy
+    var diffAcc = maxDiff - THREE.Math.randInt(0, 100)
+    var realDamage = 0
+    if (diffAcc < 0) {
+        realDamage = this.damage/10
+    }else {
+        if (diffAcc < maxDiff/2) {
+            realDamage = this.damage
+        }else {
+            realDamage = this.damage/2
+        }
+    }
+    // console.log("Damage(real/max/accuracy%/diffAcc) : " + 
+    //     realDamage + "/" + this.damage + "/" + this.accuracy +
+    //     "/" + diffAcc)
+	this.target.getDamage(realDamage);
 }
 
 Bullet.prototype.reset = function(vec3Pos) {
@@ -103,9 +120,10 @@ Bullet.prototype.reset = function(vec3Pos) {
     }
     this.origin.copy(vec3Pos)
     this.obj.lookAt(this.target.obj.position.clone());
-    var prAngle = this.owner.getPrecisionRandomnessAngle();
-    this.obj.rotation.x += THREE.Math.randFloat(-1, 1) * prAngle; 
-    this.obj.rotation.y += THREE.Math.randFloat(-1, 1) * prAngle; 
+    //Accuracy is no more used as random angle of shooting, but as a critical hit chance.
+    //var prAngle = this.owner.getPrecisionRandomnessAngle();
+    //this.obj.rotation.x += THREE.Math.randFloat(-1, 1) * prAngle; 
+    //this.obj.rotation.y += THREE.Math.randFloat(-1, 1) * prAngle; 
     this.refresh()
     this.show()
     this.needReset = false

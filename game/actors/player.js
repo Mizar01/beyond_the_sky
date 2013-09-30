@@ -231,18 +231,20 @@ Player.prototype.lookAtXZFixed = function(targetPos) {
 }
 
 Player.prototype.shootAt = function(target) {
-    gameManager.registerActor(new Bullet(this, target, this.getWeaponPower()));
+    this.lookAtXZFixed(target.obj.position)
+    var accPerc = this.levels.weaponAccuracy.evaluatePercentage()
+    gameManager.registerActor(new Bullet(this, target, this.getWeaponPower(), accPerc));
 }
 
-Player.prototype.getPrecisionRandomnessAngle = function() {
-    // a vector 0,0,0 it's the 100% precision !
-    var randPrecision = THREE.Math.randInt(0, 50) + this.levels.weaponAccuracy.level * 20;
-    if (randPrecision > 100) {
-        return 0
-    }
-    var maxOut = Math.PI/8; // this should happens if randomPrecision is 0
-    return maxOut - randPrecision/100 * maxOut; // value between 0 and maxOut
-}
+// Player.prototype.getPrecisionRandomnessAngle = function() {
+//     // a vector 0,0,0 it's the 100% precision !
+//     var randPrecision = THREE.Math.randInt(0, 50) + this.levels.weaponAccuracy.level * 20;
+//     if (randPrecision > 100) {
+//         return 0
+//     }
+//     var maxOut = Math.PI/8; // this should happens if randomPrecision is 0
+//     return maxOut - randPrecision/100 * maxOut; // value between 0 and maxOut
+// }
 
 Player.prototype.getWeaponPower = function() {
     return this.levels.weaponPower.level/2
@@ -397,5 +399,9 @@ function LevelProperty(name, initLevel, expNeeded, levelMax) {
     this.getExpForNextLevel = function() {
         // for now it's very simple
         return Math.round(Math.pow(this.level + 1, 2.5));
+    }
+
+    this.evaluatePercentage = function() {
+        return Math.floor((this.level)/(this.levelMax) * 100)
     }
 }
