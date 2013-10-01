@@ -367,8 +367,7 @@ function LevelProperty(name, initLevel, expNeeded, levelMax) {
     //this.defaultProperty = defaultProperty //the owner["property"] that will change
 
     this.canUpgrade = function(exp) {
-        //TODO : for tests now it returns always true
-        return true && !this.maxReached
+        return !this.maxReached
         //return this.expNeeded <= exp;
     }
 

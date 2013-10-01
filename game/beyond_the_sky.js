@@ -31,7 +31,7 @@ Physijs.scripts.worker = 'ace3/lib/physijs_worker.js';
 Physijs.scripts.ammo = 'ammo.js';
 
 function game_init() {
-    ace3 = new ACE3(true);
+    ace3 = new ACE3(true, 1000, 500);
     ace3.setBGColor(0xffffff);
     ace3.scene.setGravity(new THREE.Vector3( 0, -9.8, 0 )); 
     //ace3.addPostProcessing();
@@ -94,7 +94,7 @@ function game_init() {
         if (ace3.eventManager.mouseReleased()) { // 'x'
             pm.pickActor();
             var p = pm.pickedActor;
-            if (p != null && p.getType() == 'Bird') {
+            if (p != null && p.getType() == 'Enemy') {
                 this.selectedBird = p;               
             }        
             if (this.selectedBird != null) {
@@ -105,16 +105,13 @@ function game_init() {
         }            
     }
 
-    var birdCallLogic = new ACE3.Logic();
-    birdCallLogic.birdCallRate = 5; // seconds between calls
-    birdCallLogic.lastTimeCall = ace3.time.frameTime + 1;
-    birdCallLogic.run = function() {
-        var t = ace3.time.frameTime;
-        if (t - this.lastTimeCall > this.birdCallRate) {
-            var b = new Bird();
+    var enemyCallLogic = new ACE3.Logic();
+    enemyCallLogic.spawnTimer = new ACE3.CooldownTimer(0.5, true)
+    enemyCallLogic.run = function() {
+        if (this.spawnTimer.trigger()) {
+            var b = new Enemy();
             b.setPickable();
             gameManager.registerActor(b);
-            this.lastTimeCall = t;
         } 
     }
 
@@ -149,7 +146,7 @@ function game_init() {
     //gameManager.registerLogic(player.playerControlsLogic)
     //DISABLE DEFAULT CAMERA BEHAVIOUR
     ace3.camera.control = function() {};
-    gameManager.registerLogic(birdCallLogic);
+    gameManager.registerLogic(enemyCallLogic);
     gameManager.registerLogic(new ESCPauseGameLogic());
 
     //Adjust the pitch of the camera
@@ -238,26 +235,46 @@ GameUtils = {
 
 // TODO : add to the ace3 source code !!!!
 
-ACE3.CooldownTimer = function(cooldownTime) {
+ACE3.CooldownTimer = function(cooldownTime, autoRestart) {
     this.maxTime = cooldownTime
     this.time = cooldownTime
+    this.autoRestart = autoRestart || false
+    this.stopped = false
 }
 
+/**
+* If the timer is stopped the trigger is always true.
+*/
 ACE3.CooldownTimer.prototype.trigger = function() {
+    if (this.stopped) {
+        return true
+    }
     this.time -= _ace3.time.frameDelta
     if (this.time <= 0) {
-        // TRIGGER AND RESET COOLDOWN
-        this.time = this.maxTime
+        if (this.autoRestart) {
+            // TRIGGER AND RESET COOLDOWN
+            this.time = this.maxTime
+        }else {
+            this.stopped = true
+        }
         return true
     }else {
         return false
     }
 }
 
+ACE3.CooldownTimer.prototype.restart = function(newTime, autoRestart) {
+    this.maxTime = newTime || this.maxTime
+    this.time = newTime || this.maxTime
+    this.autoRestart = autoRestart || this.autoRestart
+    this.stopped = false
+}
+
 ACE3.Actor3D.prototype.getWorldCoords = function() {
     var wc = new THREE.Vector3(0, 0, 0)
     return this.obj.localToWorld(wc)
 }
+
 
 
 ACE3.Test = []

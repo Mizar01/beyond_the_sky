@@ -28,6 +28,17 @@ Platform = function(vec3pos, width, color, mass) {
 
 	this.buildingSlots = new Array(8) //array of buiding slots. For now there are only 8 slots
 
+	this.slotPositions = [ 
+				new THREE.Vector2(1, 1).multiplyScalar(0.8),
+				new THREE.Vector2(-1, -1).multiplyScalar(0.8),
+				new THREE.Vector2(-1, 1).multiplyScalar(0.8),
+				new THREE.Vector2(1, -1).multiplyScalar(0.8),
+				new THREE.Vector2(-1, 0),
+				new THREE.Vector2(1, 0),
+				new THREE.Vector2(0, 1),
+				new THREE.Vector2(0, -1)
+			   ]
+
 }
 
 Platform.extends(ACE3.Actor3D, "Platform");
@@ -58,7 +69,6 @@ Platform.prototype.run = function() {
 			this.spawnNextPlatform();
 			this.movePhase = 'waitingRobotGo';
 		}else {
-			//this.overrideTime-=.5;
 			// TODO : move eventually trough rally points (array of movePositions)
 		}
 		return;
@@ -72,7 +82,7 @@ Platform.prototype.run = function() {
 
 	if (this.movePhase == 'dismiss') {
 		// For now the object is falling down to the ground.
-		if (this.obj.position.y < 0.5) {
+		if (this.obj.position.y < 1) {
 			this.setForRemoval();
 		}
 
@@ -103,12 +113,12 @@ Platform.prototype.setReady = function() {
 
 Platform.prototype.setDismiss  = function() {
 	this.movePhase = 'dismiss';
+	this.destroyAllBuilds()
 	this.obj.rotation.z = -0.1
 	this.obj.__dirtyRotation = true
 	this.obj.__dirtyPosition = true
 	this.obj.mass = 0.2
 }
-
 
 /**
 * Spawns a brand new platform after this one
@@ -132,6 +142,7 @@ Platform.prototype.spawnNextPlatform = function() {
     //p.setPickable();
     gameManager.registerActor(p);
     nextPlatform = p;
+
 }
 
 Platform.prototype.getUsedSlots = function() {
@@ -154,17 +165,7 @@ Platform.prototype.getFreeSlot = function() {
 }
 
 Platform.prototype.getSlotPosition = function(index) {
-	var pos = [ new THREE.Vector2(-1, -1),
-				new THREE.Vector2(-1, 0),
-				new THREE.Vector2(-1, 1),
-				new THREE.Vector2(0, -1),
-				new THREE.Vector2(0, 1),
-				new THREE.Vector2(1, -1),
-				new THREE.Vector2(1, 0),
-				new THREE.Vector2(1, 1)
-			   ]
-	return pos[index].multiplyScalar(this.width/3)
-
+	return this.slotPositions[index].multiplyScalar(this.width/3)
 }
 
 
@@ -184,8 +185,17 @@ Platform.prototype.addBuild = function(typeName, owner) {
 		return -1
 	}
 
-
 }
+
+Platform.prototype.destroyAllBuilds = function() {
+	for (var i = 0; i < this.buildingSlots.length; i++) {
+		var b = this.buildingSlots[i] 
+		if (b != null && b.alive) {
+			b.destroy()
+		}
+	}
+}
+
 
 
 

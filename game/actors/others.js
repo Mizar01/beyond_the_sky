@@ -1,4 +1,4 @@
-Bird = function() {
+Enemy = function() {
 	ACE3.Actor3D.call(this);
 	this.speed = 0.005 + Math.random() * 0.005;
 	this.obj = new THREE.Object3D();//new ACE3.Builder.cube(0.5, 0x000000);
@@ -15,16 +15,16 @@ Bird = function() {
 
 	this.pickMaster = this.polygon;
 
-	this.life = 10;
+	this.life = 3;
 
     this.isEnemy = true
 
 
 }
 
-Bird.extends(ACE3.Actor3D, "Bird");
+Enemy.extends(ACE3.Actor3D, "Enemy");
 
-Bird.prototype.run = function() {
+Enemy.prototype.run = function() {
 	var tp = player.obj.position;
 	this.obj.lookAt(tp);
 	this.obj.translateZ(this.speed);
@@ -34,12 +34,18 @@ Bird.prototype.run = function() {
 	}
 }
 
-Bird.prototype.getDamage = function(qta) {
+Enemy.prototype.getDamage = function(qta) {
+    //the last damage must be done only once, 
+    //so if the enemy is dead the damage does not apply.
+    if (!this.alive) {
+        return
+    }
 	this.life -= qta;
 	if (this.life <= 0) {
         player.addExp(10)
         currentPlatform.overrideTime--
 		this.setForRemoval();
+        gameManager.registerActor(new ACE3.Explosion(this.obj.position))
 	}
 }
 
@@ -141,9 +147,12 @@ Turret = function(height, hexColor, textureJpg, owner) {
     this.uniform.texture1 = {type: 't', value: THREE.ImageUtils.loadTexture( this.texture )}
     var g = new THREE.CylinderGeometry(0.5, 0.7, this.height)  //high base, low base, height  
     this.obj = ACE3.Utils.getStandardShaderMesh(this.uniform, "generic", "fragmentShaderTower", g)
+
+    // power and cooldown time are calculated every time they are needed to 
+    // syncrhronize with the player upgrades.
+    this.power = 0
     this.cooldown = new ACE3.CooldownTimer(this.calculateCooldown())
     this.targetEnemy = null
-    this.power = this.calculatePower()
 }
 
 Turret.extends(ACE3.Actor3D, "Turret")
@@ -167,6 +176,7 @@ Turret.prototype.run = function() {
     if (canFire) {
         if (te != null && te.alive) {
             this.shoot(te)
+            this.cooldown.restart(this.calculateCooldown())
             return
         }
 
@@ -179,18 +189,42 @@ Turret.prototype.run = function() {
     this.obj.rotation.y += 0.003
 }
 
+/**
+Find the nearest target among the first n enemy found.
+I limit the search to the first n enemies because they probably
+are the older on the screen and in any case this should give
+a little shooting variation to tower (different towers have different targets)
+**/
 Turret.prototype.findNearestTarget = function() {
+    var guessLimit = 4
+    var guessIndex = 0
+    var minDistance = -1
+    var nearestTarget = null
     for (ia in gameManager.actors) {
         var a = gameManager.actors[ia]
         if (a.isEnemy && a.alive) {
-            return a
+            var d = this.getWorldCoords().distanceTo(a.obj.position)
+            if (guessIndex == 0 || d < minDistance) {
+                minDistance = d
+                nearestTarget = a
+            }
+            if (guessIndex >= guessLimit) {
+                break //force to exit main search loop.
+            }
+            guessIndex ++
         }
     }
+    return nearestTarget
 }
 
 Turret.prototype.shoot = function(target) {
     this.lookAtXZFixed(target.obj.position)
-    gameManager.registerActor(new Bullet(this, target, this.power));
+    gameManager.registerActor(new Bullet(this, target, this.calculatePower()));
+}
+
+Turret.prototype.destroy = function() {
+    this.setForRemoval()
+    gameManager.registerActor(new ACE3.Explosion(this.getWorldCoords()))
 }
 
 GunTurret = function() {
@@ -212,48 +246,3 @@ IceTurret = function() {
     Turret.call(this, 1, 0x0000ff)
 }
 IceTurret.extends(Turret, "IceTurret")
-
-
-
-// CheckPoint = function(vec3pos, index) {
-//     ACE3.ParticleActor.call(this, {
-//             texture: 'media/particle2.png',
-//             size: 2,
-//             spread: 0,
-//             particleCount: 1,
-//         });   
-//     this.origin = vec3pos;
-//     // NOTE : don't put the lookAt here, put in reset or in run function.
-//     this.collisionDistance = 0.5;
-//     this.needReset = true;
-//     this.index = index;  //index in the checkpointArray
-// }
-
-// CheckPoint.extends(ACE3.ParticleActor, "CheckPoint")
-
-// CheckPoint.prototype.run = function() {
-//     if (this.needReset) {
-//         this.reset()
-//     }
-//     this.obj.rotation.z += 0.1;
-// }
-
-// CheckPoint.prototype.reset = function(vec3Pos) {
-//     //this.duration = 0.3
-//     this.hide()
-//     var vec3Pos = vec3Pos || this.origin
-//     this.obj.position.copy(vec3Pos)
-//     for (var pi = 0; pi < this.particleCount; pi++) {
-//         var p = this.obj.geometry.vertices[pi]
-//         p.copy(new THREE.Vector3(0, 0 , pi * 6))
-//     }
-//     this.refresh()
-//     this.show()
-//     this.needReset = false
-// }
-
-
-
-
-
-

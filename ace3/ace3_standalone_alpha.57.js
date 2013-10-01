@@ -68,7 +68,7 @@ __ace3_physics_start = function(ace3scene) {
     ace3scene.simulate();
 }
 
-ACE3 = function(physicsEnabled) {
+ACE3 = function(physicsEnabled, swidth, sheight) {
 
     this.physicsEnabled = physicsEnabled || false;
     
@@ -80,16 +80,19 @@ ACE3 = function(physicsEnabled) {
     var self = this //used to access this ace3 instance from inside inner functions.
     this.pickManager = new ACE3.PickManager()
     this.projector = new THREE.Projector();
+
+    var w = swidth || 1200
+    var h = sheight || 700
+
     
-    $("body").append("<div id=\"_ace3_container\" style=\"width: 1200px; height: 700px; background-color: black;\"> </div>");
+    $("body").append("<div id=\"_ace3_container\" style=\"width: " + w + "px; height: " + h + "px; background-color: black;\"> </div>");
 
     $("body").disableSelection()
 
     this.container = document.getElementById("_ace3_container")
 
     var offset = $(this.container).offset()
-    var w = $(this.container).width()
-    var h = $(this.container).height()
+
     this.vpOffset = new THREE.Vector2(offset.left, offset.top) //size vector of the viewport
     this.vpSize = new THREE.Vector2(w, h)  // size vector of the viewport
 
