@@ -49,7 +49,31 @@ Enemy.prototype.getDamage = function(qta) {
 	}
 }
 
-
+/**
+* Useful for all types of projectiles.
+* This is a repository of reusable code.
+*/
+ProjectileFunctions = {
+    damageTarget: function() {
+        //evaluate the random accuracy
+        var maxDiff = this.accuracy
+        var diffAcc = maxDiff - THREE.Math.randInt(0, 100)
+        var realDamage = 0
+        if (diffAcc < 0) {
+            realDamage = this.damage/10
+        }else {
+            if (diffAcc < maxDiff/2) {
+                realDamage = this.damage
+            }else {
+                realDamage = this.damage/2
+            }
+        }
+        // console.log("Damage(real/max/accuracy%/diffAcc) : " + 
+        //     realDamage + "/" + this.damage + "/" + this.accuracy +
+        //     "/" + diffAcc)
+        this.target.getDamage(realDamage);
+    }
+} 
 
 Bullet = function(owner, target, damage, accuracyPerc) {
     ACE3.ParticleActor.call(this, {
@@ -97,25 +121,7 @@ Bullet.prototype.run = function() {
 
 }
 
-Bullet.prototype.damageTarget = function() {
-    //evaluate the random accuracy
-    var maxDiff = this.accuracy
-    var diffAcc = maxDiff - THREE.Math.randInt(0, 100)
-    var realDamage = 0
-    if (diffAcc < 0) {
-        realDamage = this.damage/10
-    }else {
-        if (diffAcc < maxDiff/2) {
-            realDamage = this.damage
-        }else {
-            realDamage = this.damage/2
-        }
-    }
-    // console.log("Damage(real/max/accuracy%/diffAcc) : " + 
-    //     realDamage + "/" + this.damage + "/" + this.accuracy +
-    //     "/" + diffAcc)
-	this.target.getDamage(realDamage);
-}
+Bullet.prototype.damageTarget = ProjectileFunctions.damageTarget
 
 Bullet.prototype.reset = function(vec3Pos) {
     //this.duration = 0.3
@@ -136,6 +142,30 @@ Bullet.prototype.reset = function(vec3Pos) {
     this.show()
     this.needReset = false
 }
+
+
+Laser = function(owner, target, damage, accuracyPerc) {
+    ACE3.Actor3D.call(this);
+    this.damage = damage
+    this.accuracy = accuracyPerc || 100
+    this.timeToLive = new ACE3.CooldownTimer(.3)
+    this.owner = owner
+    this.target =target
+    this.obj = new ACE3.Builder.line(owner.getWorldCoords(), target.getWorldCoords(), 0xffffff, 1)
+}
+
+Laser.extends(ACE3.Actor3D, "Laser")
+
+Laser.prototype.run = function() {
+    if (this.timeToLive.trigger()) {
+        this.setForRemoval()
+        ProjectileFunctions.damageTarget.call(this)
+
+    }
+}
+
+
+
 
 Turret = function(height, hexColor, textureJpg, owner) {
     ACE3.Actor3D.call(this);
@@ -175,6 +205,7 @@ Turret.prototype.run = function() {
     //console.log(canFire)
     if (canFire) {
         if (te != null && te.alive) {
+            this.lookAtXZFixed(te.obj.position)
             this.shoot(te)
             this.cooldown.restart(this.calculateCooldown())
             return
@@ -218,7 +249,6 @@ Turret.prototype.findNearestTarget = function() {
 }
 
 Turret.prototype.shoot = function(target) {
-    this.lookAtXZFixed(target.obj.position)
     gameManager.registerActor(new Bullet(this, target, this.calculatePower()));
 }
 
@@ -232,10 +262,29 @@ GunTurret = function() {
 }
 GunTurret.extends(Turret, "GunTurret")
 
+/**
+* Laser Turret has great power and very high cooldown time
+* and it shoot lasers objects
+*/
 LaserTurret = function() {
     Turret.call(this, 1, 0xffffaa)
 }
 LaserTurret.extends(Turret, "LaserTurret")
+
+LaserTurret.prototype.calculateCooldown = function() {
+    //TODO : for now the cooldown is low for testing
+    return Math.max(1,5 - this.owner.levels.turretRate.level)
+}
+
+LaserTurret.prototype.calculatePower = function() {
+    return this.owner.levels.turretPower.level * 30
+}
+LaserTurret.prototype.shoot = function(target) {
+    gameManager.registerActor(new Laser(this, target, this.calculatePower()))
+}
+
+
+
 
 MissileTurret = function() {
     Turret.call(this, 1, 0xff00ff)

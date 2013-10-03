@@ -235,48 +235,6 @@ GameUtils = {
 
 // TODO : add to the ace3 source code !!!!
 
-ACE3.CooldownTimer = function(cooldownTime, autoRestart) {
-    this.maxTime = cooldownTime
-    this.time = cooldownTime
-    this.autoRestart = autoRestart || false
-    this.stopped = false
-}
-
-/**
-* If the timer is stopped the trigger is always true.
-*/
-ACE3.CooldownTimer.prototype.trigger = function() {
-    if (this.stopped) {
-        return true
-    }
-    this.time -= _ace3.time.frameDelta
-    if (this.time <= 0) {
-        if (this.autoRestart) {
-            // TRIGGER AND RESET COOLDOWN
-            this.time = this.maxTime
-        }else {
-            this.stopped = true
-        }
-        return true
-    }else {
-        return false
-    }
-}
-
-ACE3.CooldownTimer.prototype.restart = function(newTime, autoRestart) {
-    this.maxTime = newTime || this.maxTime
-    this.time = newTime || this.maxTime
-    this.autoRestart = autoRestart || this.autoRestart
-    this.stopped = false
-}
-
-ACE3.Actor3D.prototype.getWorldCoords = function() {
-    var wc = new THREE.Vector3(0, 0, 0)
-    return this.obj.localToWorld(wc)
-}
-
-
-
 ACE3.Test = []
 
 ACE3.Test.makeTestCube = function(position, color){

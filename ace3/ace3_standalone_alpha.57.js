@@ -53,12 +53,21 @@ if (!window.requestAnimationFrame) {
 
 var _ace3 = null
 
+/**
+ * Physijs scene is completely dependent from the status of 
+ * defaultActorManager. So it's configured to stop and resume entire physics 
+ * effects with stop and play of ace3.defaultActorManager
+*/
 __ace3_physics_load_scene = function() {
     var scene = new Physijs.Scene;
     scene.addEventListener(
             'update',
             function() {
-                _ace3.scene.simulate( undefined, 1 );
+                //Excluding the call to simulate() will stop 
+                //completely any other update event. 
+                if (!_ace3.defaultActorManager.paused) {
+                    _ace3.scene.simulate( undefined, 1 );
+                }
             }
     );
     return scene;
@@ -66,6 +75,10 @@ __ace3_physics_load_scene = function() {
 
 __ace3_physics_start = function(ace3scene) {
     ace3scene.simulate();
+}
+__ace3_physics_resume = function() {
+    //Restart of physics simulation with a timestep of 1 fps
+    _ace3.scene.simulate(0.0167, 1)
 }
 
 ACE3 = function(physicsEnabled, swidth, sheight) {
@@ -121,7 +134,18 @@ ACE3 = function(physicsEnabled, swidth, sheight) {
     this.camera.pivot.position.set(0, 0, 10)
     this.scene.add(this.camera.pivot)
     
+    //The defaultActorManager is entirely associated with the scene.
+    //NOTE : if the defaultActorManager pauses, also the physics in the entire scene are paused.
+    //This beahaviour is not always desired. Feel free to change the 'update' listener for the scene
+    // (see the __ace3_physics_load_scene method)
     this.defaultActorManager = new ACE3.ActorManager(this.scene)
+    // Override the default behaviour
+    this.defaultActorManager.play = function () {
+        this.paused = false
+        if (_ace3.physicsEnabled) {
+            __ace3_physics_resume()
+        }
+    }
     
     this.actorManagerSet = []
     this.actorManagerSet.push(this.defaultActorManager)
@@ -725,10 +749,52 @@ ACE3.TimeManager.prototype.run = function() {
 	this.frameTime = this.clock.getElapsedTime()
 }
 
-// TODO : create a new special object called ACE3.Timer used for contextual management of 
-// managers. All the actors must read the relative time from their manager, or in other
-// ways this can be implemented in every single Actor, so we are completely free to handle 
-// the time even for actor children.
+/**
+* The CooldownTimer is used as local timer for an Actor/Entity. 
+* It must be called everytime it's needed through trigger() method.
+* The method returns if the time has reached 0 and it can restart
+* automatically if needed (default is restart = false) 
+*/
+
+ACE3.CooldownTimer = function(cooldownTime, autoRestart) {
+    this.maxTime = cooldownTime
+    this.time = cooldownTime
+    this.autoRestart = autoRestart || false
+    this.stopped = false
+}
+
+/* 
+* If the timer is stopped the trigger is always true.
+*/
+ACE3.CooldownTimer.prototype.trigger = function() {
+    if (this.stopped) {
+        return true
+    }
+    this.time -= _ace3.time.frameDelta
+    if (this.time <= 0) {
+        if (this.autoRestart) {
+            // TRIGGER AND RESET COOLDOWN
+            this.time = this.maxTime
+        }else {
+            this.stopped = true
+        }
+        return true
+    }else {
+        return false
+    }
+}
+
+ACE3.CooldownTimer.prototype.restart = function(newTime, autoRestart) {
+    this.maxTime = newTime || this.maxTime
+    this.time = newTime || this.maxTime
+    this.autoRestart = autoRestart || this.autoRestart
+    this.stopped = false
+}
+
+ACE3.Actor3D.prototype.getWorldCoords = function() {
+    var wc = new THREE.Vector3(0, 0, 0)
+    return this.obj.localToWorld(wc)
+}
 
 ACE3.ActorManager = function(scene) {
     this.scene = scene
@@ -1190,6 +1256,15 @@ ACE3.Builder = {
         var g = new THREE.CubeGeometry(sizex, sizey, sizez)
         var s = new THREE.Mesh(g, new THREE.MeshBasicMaterial({'color':color}))
         return s
+    },
+    // NOTE : in windows the linewidth doesn't work (see the three js documentation)
+    line: function(vec3orig, vec3dest, color, linewidth) {
+        var g = new THREE.Geometry();
+        g.vertices.push(vec3orig);
+        g.vertices.push(vec3dest);
+        var m = new THREE.LineBasicMaterial({color: color, linewidth : linewidth});
+        var s = new THREE.Line(g, m)
+        return s  
     },
     cylinder: function(radius, height, color) {
         var g = new THREE.CylinderGeometry(radius, radius, height)
