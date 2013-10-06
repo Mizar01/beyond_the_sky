@@ -19,6 +19,9 @@ Enemy = function() {
 
     this.isEnemy = true
 
+    this.slowEffectPower = 0
+    this.slowEffectTimer = null
+
 
 }
 
@@ -27,7 +30,7 @@ Enemy.extends(ACE3.Actor3D, "Enemy");
 Enemy.prototype.run = function() {
 	var tp = player.obj.position;
 	this.obj.lookAt(tp);
-	this.obj.translateZ(this.speed);
+	this.obj.translateZ(this.calculateSpeed());
 	this.polygon.rotation.y += 0.1;
 	if (this.obj.position.distanceTo(tp) < 0.5) {
 		this.setForRemoval();
@@ -49,35 +52,71 @@ Enemy.prototype.getDamage = function(qta) {
 	}
 }
 
+
+Enemy.prototype.addSlowEffect = function(power, duration) {
+    /* Only one slow effect if no other slow effect is already applied */
+    if (this.slowEffectPower <= 0) {
+        this.slowEffectPower = power
+        this.slowEffectTimer = new ACE3.CooldownTimer(duration)
+    }
+}
+
+Enemy.prototype.calculateSpeed =function() {
+    if (this.slowEffectPower > 0) {
+        var tr = this.slowEffectTimer.trigger()
+        if (tr) {
+            this.slowEffectPower = 0
+            this.slowEffectTimer = null
+            return this.speed
+        }else {
+            return Math.max(0, this.speed - this.slowEffectPower)
+        }
+    }else {
+        return this.speed
+    }
+}
+
 /**
 * Useful for all types of projectiles.
 * This is a repository of reusable code.
 */
 ProjectileFunctions = {
     damageTarget: function() {
-        //evaluate the random accuracy
-        var maxDiff = this.accuracy
-        var diffAcc = maxDiff - THREE.Math.randInt(0, 100)
-        var realDamage = 0
-        if (diffAcc < 0) {
-            realDamage = this.damage/10
-        }else {
-            if (diffAcc < maxDiff/2) {
-                realDamage = this.damage
-            }else {
-                realDamage = this.damage/2
-            }
+        var bt = this.bulletType
+        if (bt == "freeze") {
+            this.target.addSlowEffect(this.damage, 3)
+            return
         }
-        // console.log("Damage(real/max/accuracy%/diffAcc) : " + 
-        //     realDamage + "/" + this.damage + "/" + this.accuracy +
-        //     "/" + diffAcc)
-        this.target.getDamage(realDamage);
+        if (bt == "fire" || bt == "laser" || bt == "missile") {
+            //evaluate the random accuracy
+            var maxDiff = this.accuracy
+            var diffAcc = maxDiff - THREE.Math.randInt(0, 100)
+            var realDamage = 0
+            if (diffAcc < 0) {
+                realDamage = this.damage/10
+            }else {
+                if (diffAcc < maxDiff/2) {
+                    realDamage = this.damage
+                }else {
+                    realDamage = this.damage/2
+                }
+            }
+            // console.log("Damage(real/max/accuracy%/diffAcc) : " + 
+            //     realDamage + "/" + this.damage + "/" + this.accuracy +
+            //     "/" + diffAcc)
+            this.target.getDamage(realDamage);
+            return
+        }
     }
 } 
 
-Bullet = function(owner, target, damage, accuracyPerc) {
+Bullet = function(owner, target, damage, accuracyPerc, type) {
+    this.bulletType = type || "fire"   // fire, freeze
+    this.texture = { "fire": "media/particle2.png", 
+                     "freeze": "media/particle.png"
+                   }
     ACE3.ParticleActor.call(this, {
-            texture: 'media/particle2.png',
+            texture: this.texture[this.bulletType],
             size: 2,
             spread: 0,
             particleCount: 1,
@@ -145,6 +184,7 @@ Bullet.prototype.reset = function(vec3Pos) {
 
 
 Laser = function(owner, target, damage, accuracyPerc) {
+    this.bulletType = "laser"
     ACE3.Actor3D.call(this);
     this.damage = damage
     this.accuracy = accuracyPerc || 100
@@ -295,3 +335,48 @@ IceTurret = function() {
     Turret.call(this, 1, 0x0000ff)
 }
 IceTurret.extends(Turret, "IceTurret")
+
+IceTurret.prototype.calculateCooldown = function() {
+    //TODO : for now the cooldown is low for testing
+    return Math.max(1,5 - this.owner.levels.turretRate.level)
+}
+
+IceTurret.prototype.calculatePower = function() {
+    return this.owner.levels.turretPower.level/50
+}
+IceTurret.prototype.shoot = function(target) {
+    gameManager.registerActor(new Bullet(this, target, this.calculatePower(), 100, "freeze"))
+}
+
+//rewrite run so it can find a new target every time (TODO : it's a bit heavy for the cpu, so find other solutions)
+IceTurret.prototype.run = function() {
+    this.target = this.findNearestTarget()
+    IceTurret.superClass.run.call(this)
+}
+
+// rewrite the findNearestTarget for the IceTurret, so it can fire 
+// at enemies that are not already affect by the slowdown.
+IceTurret.prototype.findNearestTarget = function() {
+    var guessLimit = 4
+    var guessIndex = 0
+    var minDistance = -1
+    var nearestTarget = null
+    for (ia in gameManager.actors) {
+        var a = gameManager.actors[ia]
+        if (a.isEnemy && a.alive && a.slowEffectPower <= 0) {
+            var d = this.getWorldCoords().distanceTo(a.obj.position)
+            if (guessIndex == 0 || d < minDistance) {
+                minDistance = d
+                nearestTarget = a
+            }
+            if (guessIndex >= guessLimit) {
+                break //force to exit main search loop.
+            }
+            guessIndex ++
+        }
+    }
+    return nearestTarget
+}
+
+
+

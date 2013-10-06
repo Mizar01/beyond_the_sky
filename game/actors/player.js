@@ -332,7 +332,7 @@ function LevelDB(owner) {
     this.shieldRegeneration = new LevelProperty("Shield Gen", 1, 3)
     this.shieldStrength = new LevelProperty("Shield Repulsion", 1, 3)
 
-    this.turretPower = new LevelProperty("Turret Fire Power", 1, 10)
+    this.turretPower = new LevelProperty("Turret Fire Power", 1, 3)
     this.turretRate = new LevelProperty("Turret Fire Rate", 1, 3)
     this.turretSlots = new LevelProperty("Max no. of turrets", 8, 10, 8)
 
