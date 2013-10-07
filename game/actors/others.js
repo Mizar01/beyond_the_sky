@@ -59,6 +59,7 @@ Enemy.prototype.addSlowEffect = function(power, duration) {
         this.slowEffectPower = power
         this.slowEffectTimer = new ACE3.CooldownTimer(duration)
     }
+    // console.log("added slow effect to " + this.getId() + "with power of " + this.slowEffectPower)
 }
 
 Enemy.prototype.calculateSpeed =function() {
@@ -84,7 +85,7 @@ ProjectileFunctions = {
     damageTarget: function() {
         var bt = this.bulletType
         if (bt == "freeze") {
-            this.target.addSlowEffect(this.damage, 3)
+            this.target.addSlowEffect(this.damage, 30)
             return
         }
         if (bt == "fire" || bt == "laser" || bt == "missile") {
@@ -181,6 +182,22 @@ Bullet.prototype.reset = function(vec3Pos) {
     this.show()
     this.needReset = false
 }
+
+/**
+* Special type of missile that point high in the sky and slowly point to the enemy after a lifting phase.
+*/
+MissileWarHead = function(owner, target, damage, accuracyPerc, type) {
+    ACE3.Actor3D.call(this);
+    this.speed = 0.005 + Math.random() * 0.005;
+    this.obj = new THREE.Object3D();//new ACE3.Builder.cube(0.5, 0x000000);
+    //var g = new THREE.CylinderGeometry(0.1, 0.3, 1.2)
+    //this.polygon = new THREE.Mesh(g, new THREE.MeshBasicMaterial({'color':0x000000}))
+    this.polygon = ACE3.Builder.cube2(1, 2, 1, 0x00ffff)
+    this.polygon.rotation.x = + Math.PI/2;
+    this.obj.add(this.polygon);
+    //TODO ...   
+}
+
 
 
 Laser = function(owner, target, damage, accuracyPerc) {
@@ -348,9 +365,13 @@ IceTurret.prototype.shoot = function(target) {
     gameManager.registerActor(new Bullet(this, target, this.calculatePower(), 100, "freeze"))
 }
 
-//rewrite run so it can find a new target every time (TODO : it's a bit heavy for the cpu, so find other solutions)
+//rewrite run so it can find a new target every time
 IceTurret.prototype.run = function() {
-    this.target = this.findNearestTarget()
+    //It's useless to call this every frame, i'll call it whenever the tower can fire.
+    if (this.cooldown.trigger()) {
+        //time to find a new target
+        this.targetEnemy = this.findNearestTarget()
+    }
     IceTurret.superClass.run.call(this)
 }
 
@@ -363,6 +384,9 @@ IceTurret.prototype.findNearestTarget = function() {
     var nearestTarget = null
     for (ia in gameManager.actors) {
         var a = gameManager.actors[ia]
+        // if (a.isEnemy && a.alive) {
+        //     console.log(a.getId() + "-> " + a.slowEffectPower)
+        // }
         if (a.isEnemy && a.alive && a.slowEffectPower <= 0) {
             var d = this.getWorldCoords().distanceTo(a.obj.position)
             if (guessIndex == 0 || d < minDistance) {
@@ -375,6 +399,9 @@ IceTurret.prototype.findNearestTarget = function() {
             guessIndex ++
         }
     }
+    // if (nearestTarget != null) {
+    //     console.log(">>>>> " + nearestTarget.getId() + "->" + nearestTarget.slowEffectPower)
+    // }
     return nearestTarget
 }
 

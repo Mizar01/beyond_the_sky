@@ -106,7 +106,7 @@ function game_init() {
     }
 
     var enemyCallLogic = new ACE3.Logic();
-    enemyCallLogic.spawnTimer = new ACE3.CooldownTimer(0.5, true)
+    enemyCallLogic.spawnTimer = new ACE3.CooldownTimer(2, true)
     enemyCallLogic.run = function() {
         if (this.spawnTimer.trigger()) {
             var b = new Enemy();
