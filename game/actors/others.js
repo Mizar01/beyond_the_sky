@@ -37,9 +37,14 @@ Enemy.prototype.run = function() {
 	}
 }
 
-Enemy.prototype.getDamage = function(qta) {
+Enemy.prototype.getDamage = function(qta, bulletType) {
     //the last damage must be done only once, 
     //so if the enemy is dead the damage does not apply.
+
+    //The variable bulletType is used to some special
+    //enemies that has special properties when getting damage from
+    //some types of projectiles.
+
     if (!this.alive) {
         return
     }
@@ -105,14 +110,14 @@ ProjectileFunctions = {
             // console.log("Damage(real/max/accuracy%/diffAcc) : " + 
             //     realDamage + "/" + this.damage + "/" + this.accuracy +
             //     "/" + diffAcc)
-            this.target.getDamage(realDamage);
+            this.target.getDamage(realDamage, this.bulletType);
             return
         }
     }
 } 
 
 Bullet = function(owner, target, damage, accuracyPerc, type) {
-    this.bulletType = type || "fire"   // fire, freeze
+    this.bulletType = type || "fire"   // fire, freeze (for Bullet instances)
     this.texture = { "fire": "media/particle2.png", 
                      "freeze": "media/particle.png"
                    }
@@ -188,15 +193,57 @@ Bullet.prototype.reset = function(vec3Pos) {
 */
 MissileWarHead = function(owner, target, damage, accuracyPerc, type) {
     ACE3.Actor3D.call(this);
+    this.bulletType = type || "missile" 
     this.speed = 0.005 + Math.random() * 0.005;
     this.obj = new THREE.Object3D();//new ACE3.Builder.cube(0.5, 0x000000);
     //var g = new THREE.CylinderGeometry(0.1, 0.3, 1.2)
     //this.polygon = new THREE.Mesh(g, new THREE.MeshBasicMaterial({'color':0x000000}))
-    this.polygon = ACE3.Builder.cube2(1, 2, 1, 0x00ffff)
+    this.polygon = ACE3.Builder.cube2(0.2, 1.2, 0.2, 0x00ffff)
     this.polygon.rotation.x = + Math.PI/2;
     this.obj.add(this.polygon);
-    //TODO ...   
+    this.obj.position.copy(owner.getWorldCoords())
+    this.collisionDistance = 0.5;
+    this.speed = 0.2;
+    this.needReset = true;
+    this.damage = damage
+    this.accuracy = accuracyPerc || 100 
+    this.target = target     
+    //Actually the missile has always a target, so, there's no need for a time to live.
+    this.timeToLive = null
+    this.heightDelay = 10 //position to look above the position of target. It decreases at every frame.
 }
+
+MissileWarHead.extends(ACE3.Actor3D, "MissileWarHead")
+
+MissileWarHead.prototype.run = function() {
+
+    var te = this.target
+    if (te == null || !te.alive) {
+        this.setForRemoval()
+    }else {
+        var tp = te.obj.position
+        var p = this.obj.position
+        var tPoint = new THREE.Vector3(tp.x, tp.y + this.heightDelay, tp.z)
+        if ( this.heightDelay <= 0 && tp.distanceTo(p) < this.collisionDistance) {
+            this.damageTarget()
+            this.target = null
+            this.setForRemoval()
+        }
+
+        //moving and looking
+        this.obj.lookAt(tPoint);
+        this.obj.translateZ(this.speed);
+
+        //decrease heightDelay
+        if (this.heightDelay > 0) {
+            this.heightDelay -= 0.2
+        }else {
+            this.heightDelay = 0
+        }
+    }
+}
+
+MissileWarHead.prototype.damageTarget = ProjectileFunctions.damageTarget
 
 
 
@@ -245,7 +292,7 @@ Turret = function(height, hexColor, textureJpg, owner) {
 Turret.extends(ACE3.Actor3D, "Turret")
 
 Turret.prototype.calculateCooldown = function() {
-    return Math.max(1,5 - this.owner.levels.turretRate.level)
+    return Math.max(1,4 - this.owner.levels.turretRate.level)
 }
 Turret.prototype.calculatePower = function() {
     return this.owner.levels.turretPower.level
@@ -341,12 +388,24 @@ LaserTurret.prototype.shoot = function(target) {
 }
 
 
-
-
 MissileTurret = function() {
     Turret.call(this, 1, 0xff00ff)
 }
 MissileTurret.extends(Turret, "MissileTurret")
+
+MissileTurret.prototype.calculateCooldown = function() {
+    //TODO : for now the cooldown is low for testing
+    return Math.max(1,8 - this.owner.levels.turretRate.level)
+}
+
+MissileTurret.prototype.calculatePower = function() {
+    return this.owner.levels.turretPower.level * 30
+}
+MissileTurret.prototype.shoot = function(target) {
+    gameManager.registerActor(new MissileWarHead(this, target, this.calculatePower()))
+}
+
+
 
 IceTurret = function() {
     Turret.call(this, 1, 0x0000ff)
@@ -355,7 +414,7 @@ IceTurret.extends(Turret, "IceTurret")
 
 IceTurret.prototype.calculateCooldown = function() {
     //TODO : for now the cooldown is low for testing
-    return Math.max(1,5 - this.owner.levels.turretRate.level)
+    return Math.max(1,6 - this.owner.levels.turretRate.level)
 }
 
 IceTurret.prototype.calculatePower = function() {

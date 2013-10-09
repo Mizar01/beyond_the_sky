@@ -69,7 +69,7 @@ function game_init() {
     cameraFollowLogic.run = function() {
         var tp = new THREE.Vector3(player.obj.position.x, 
                                                player.obj.position.y + 13,   //10
-                                               player.obj.position.z + 18);  //28
+                                               player.obj.position.z + 28);  //28
         var cp = ace3.camera.pivot.position;
         if (cp.distanceTo(tp) > 0.6) { 
             var d = ACE3.Math.getDirection(cp, tp);
@@ -106,7 +106,7 @@ function game_init() {
     }
 
     var enemyCallLogic = new ACE3.Logic();
-    enemyCallLogic.spawnTimer = new ACE3.CooldownTimer(2, true)
+    enemyCallLogic.spawnTimer = new ACE3.CooldownTimer(0.2, true)
     enemyCallLogic.run = function() {
         if (this.spawnTimer.trigger()) {
             var b = new Enemy();
