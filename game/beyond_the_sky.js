@@ -246,6 +246,35 @@ ACE3.Test.makeTestCube = function(position, color){
     return obj
 }
 
+/**
+* Gets a random object from an associative array.
+* TODO : it's not very performant. It scans always the entire array.
+* You can specify a filter property to exclude from the choosing some other objects.
+*/
+ACE3.Math.getRandomObject = function(assocArr, filterProp, filterValue) {
+    var limit = -1 || limit
+    var ret;
+    var c = 0;
+    var prop = filterProp || null 
+    var val = filterValue || null
+    //boolean
+    if (val == "true") {
+        val = true
+    }else if (val == "false") {
+        val = false
+    }
+    for (var key in assocArr) {
+        // console.log("assocArray["+ key+ "]["+ prop +"]")
+        if ((prop != null && val != null && assocArr[key][prop] == val) ||
+             prop == null) {
+            c++ //the increment is done only if the properties are right.
+            if (Math.random() < 1/c)     //this is the secret formula.
+               ret = key;
+       }
+    }
+    return assocArr[ret];
+}
+
 
 
 

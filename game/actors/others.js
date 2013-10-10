@@ -210,7 +210,7 @@ MissileWarHead = function(owner, target, damage, accuracyPerc, type) {
     this.target = target     
     //Actually the missile has always a target, so, there's no need for a time to live.
     this.timeToLive = null
-    this.heightDelay = 10 //position to look above the position of target. It decreases at every frame.
+    this.heightDelay = 25 //position to look above the position of target. It decreases at every frame.
 }
 
 MissileWarHead.extends(ACE3.Actor3D, "MissileWarHead")
@@ -403,6 +403,19 @@ MissileTurret.prototype.calculatePower = function() {
 }
 MissileTurret.prototype.shoot = function(target) {
     gameManager.registerActor(new MissileWarHead(this, target, this.calculatePower()))
+}
+/**
+* Finds a randomTarget
+* TODO : that can lead to slowdowns. Try other solutions.
+*/
+MissileTurret.prototype.findNearestTarget = function() {
+    var filterProperty = "isEnemy"
+    var filterValue = "true"
+    var to = ACE3.Math.getRandomObject(gameManager.actors, filterProperty, filterValue)
+    if (to.isEnemy && to.alive) {
+        return to
+    }
+    return null
 }
 
 
