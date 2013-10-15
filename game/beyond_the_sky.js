@@ -68,7 +68,7 @@ function game_init() {
     cameraFollowLogic.followSpeed = 0.1;
     cameraFollowLogic.run = function() {
         var tp = new THREE.Vector3(player.obj.position.x, 
-                                               player.obj.position.y + 33,   //10
+                                               player.obj.position.y + 10,   //10
                                                player.obj.position.z + 28);  //28
         var cp = ace3.camera.pivot.position;
         if (cp.distanceTo(tp) > 0.6) { 
@@ -105,17 +105,6 @@ function game_init() {
         }            
     }
 
-    var enemyCallLogic = new ACE3.Logic();
-    enemyCallLogic.spawnTimer = new ACE3.CooldownTimer(10, true)
-    enemyCallLogic.spawnTimer.time = 0.1 //make the first spawn instantly
-    enemyCallLogic.run = function() {
-        if (this.spawnTimer.trigger()) {
-            var b = new Enemy();
-            b.setPickable();
-            gameManager.registerActor(b);
-        } 
-    }
-
     //Display infos (temporary)
     var playerLifeInfo = new ACE3.DisplayValue("LIFE", "", ace3.getFromRatio(15, 97))
     playerLifeInfo.valueFunction = function() {
@@ -147,7 +136,7 @@ function game_init() {
     //gameManager.registerLogic(player.playerControlsLogic)
     //DISABLE DEFAULT CAMERA BEHAVIOUR
     ace3.camera.control = function() {};
-    gameManager.registerLogic(enemyCallLogic);
+    gameManager.registerLogic(new EnemyCallLogic(0.5));
     gameManager.registerLogic(new ESCPauseGameLogic());
 
     //Adjust the pitch of the camera
@@ -225,10 +214,10 @@ function game_builds() {
 
 GameUtils = {
     getRandomHexColor: function() {
-        var colors = ["ff","00","33", "a5", "88", "f0", "0f"];
-        var randR = colors[THREE.Math.randInt(0,6)];
-        var randG = colors[THREE.Math.randInt(0,6)];
-        var randB = colors[THREE.Math.randInt(0,6)];
+        var colors = ["ff","00","33", "a5", "88", "f0", "0f", "5a"];
+        var randR = colors[THREE.Math.randInt(0,7)];
+        var randG = colors[THREE.Math.randInt(0,7)];
+        var randB = colors[THREE.Math.randInt(0,7)];
         return c = parseInt("0x" + randR + randG + randB);
     },
 }
@@ -282,11 +271,30 @@ ACE3.Math.getRandomObject = function(assocArr, filterProp, filterValue) {
 * The angle is between -PI and PI.
 */
 ACE3.Math.getXZAngle = function(p1, p2) {
+    // console.log("getXZAngle")
     var xd = p2.x - p1.x
-    var zd = p2.z = p1.z
-    return Math.atan2(zd, xd)
+    var zd = p2.z - p1.z
+    var res = Math.atan2(-zd, xd)   //The minus is necessary because z axis is reversed.
+    // console.log(p1)
+    // console.log(p2)
+    // console.log("angle:" + res)
+    return res
 }
 
+
+/**
+* Return the angle normalized between -PI and PI
+*/
+ACE3.Math.getNormalizedAngle = function(angle) {
+    var m = angle % (Math.PI * 2)
+    if (m > 0 && m > Math.PI) {
+        m -= Math.PI * 2
+    }else if (m < 0 && m < -Math.PI) {
+        m += Math.PI * 2
+    }
+    return m
+
+}
 
 /**
 * get the angle between the distance vector and the xz plane.
@@ -304,14 +312,23 @@ ACE3.Math.getPitchAngle = function(p1, p2) {
 * The angles must be -PI / PI
 **/
 ACE3.Math.getAngleDirection = function(a1, a2) {
+    // console.log("getAngleDirection")
+    //normalize
+    a1 = ACE3.Math.getNormalizedAngle(a1)
+    a2 = ACE3.Math.getNormalizedAngle(a2)
     var pi = Math.PI
     var d = Math.abs(a2 - a1)
     var diff = a2 - a1
-    if (d == 0) {
+    // console.log("a1:" + a1 + " --- a2:" + a2)
+    // console.log("d:" + d + "--- diff:" + diff)
+    if (d == 0 || d == Math.PI * 2) {
+        // console.log("returning 0")
         return 0
     }else if ((diff > 0 && d > pi) || (diff < 0 && d < pi)) {
+        // console.log("returning -1")
         return -1
     }else {
+        // console.log("returning 1")
         return 1
     }
 
@@ -332,13 +349,3 @@ ACE3.Actor3D.prototype.getPitch = function(vec3Target) {
 ACE3.Actor.isAlive = function(actor) {
     return actor != null && actor.alive 
 }
-
-
-
-
-
-
-
-
-
-

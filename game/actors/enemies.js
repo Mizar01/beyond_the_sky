@@ -3,7 +3,7 @@ Enemy = function() {
 	this.speed = 0.005 + Math.random() * 0.005;
 	this.obj = new THREE.Object3D();//new ACE3.Builder.cube(0.5, 0x000000);
     var g = new THREE.CylinderGeometry(0.1, 0.3, 1.2)
-    this.polygon = new THREE.Mesh(g, new THREE.MeshBasicMaterial({'color':0x000000}))
+    this.polygon = new THREE.Mesh(g, new THREE.MeshBasicMaterial({'color':GameUtils.getRandomHexColor()}))
     this.polygon.rotation.x = + Math.PI/2;
 	this.obj.add(this.polygon);
 	var pp = player.obj.position;

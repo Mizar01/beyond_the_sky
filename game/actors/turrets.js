@@ -8,9 +8,9 @@ Turret = function(height, hexColor, textureJpg, owner) {
     this.uniform.texture1 = {type: 't', value: THREE.ImageUtils.loadTexture( this.texture )}
     var g = new THREE.CylinderGeometry(0.5, 0.7, this.height)  //high base, low base, height  
     this.obj = ACE3.Utils.getStandardShaderMesh(this.uniform, "generic", "fragmentShaderTower", g)
-    this.child1 = ACE3.Builder.cube2(3, 0.2, 0.2, 0xff00ff)
+    this.child1 = ACE3.Builder.cube2(1, 0.2, 0.2, 0x443344)
     this.obj.add(this.child1)
-    this.child1.position.set(-1, 0, 0)
+    this.child1.position.set(1, 0, 0)
 
     // power and cooldown time are calculated every time they are needed to 
     // syncrhronize with the player upgrades.
@@ -40,8 +40,8 @@ Turret.prototype.run = function() {
     var isFacingTarget = true
     if (ACE3.Actor.isAlive(te)) {
         var enemyAngle = this.getYaw(te.getWorldCoords())
-        var modAngle = this.obj.rotation.y%(Math.PI * 2) - Math.PI 
-        //onsole.log(modAngle + "--" + enemyAngle)
+        var modAngle = ACE3.Math.getNormalizedAngle(this.obj.rotation.y) 
+        // console.log("Player Angle " + this.obj.rotation.y + " normalized to " + modAngle)
         if (Math.abs(modAngle - enemyAngle) < 0.05) {
             isFacingTarget = true;
         } else {
@@ -71,7 +71,7 @@ Turret.prototype.run = function() {
 }
 
 Turret.prototype.rotateTowardsAngle = function(angle) {
-    var d = ACE3.Math.getAngleDirection(this.obj.rotation.y, this.enemyAngle)
+    var d = ACE3.Math.getAngleDirection(this.obj.rotation.y, angle)
     this.obj.rotation.y += 0.01 * d
 }
 
@@ -164,7 +164,7 @@ MissileTurret.prototype.findNearestTarget = function() {
     var filterProperty = "isEnemy"
     var filterValue = "true"
     var to = ACE3.Math.getRandomObject(gameManager.actors, filterProperty, filterValue)
-    if (to.isEnemy && to.alive) {
+    if (ACE3.Actor.isAlive(to)) {
         return to
     }
     return null
