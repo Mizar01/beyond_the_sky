@@ -7,6 +7,7 @@ beyond_the_sky
 * (WAITING FOR THE RESPONSE OF phisijs developer.) Modify the ACE3 Code in scene.addEventListener...  in order to pause simulation if gameManager is paused,  and add the claryfing comment in the definition of the defaultActorManager.
 * add line() method to ACE3.Builder
 * the method findNearestTarget for the icetower finds always the same target. This is incorrect.
-- find a new way to shoot with missile turrets. For now almost every shot is useless because other bullets reach
+* find a new way to shoot with missile turrets. For now almost every shot is useless because other bullets reach
   the target first.
+- improve drone movements.
   

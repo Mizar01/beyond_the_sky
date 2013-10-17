@@ -291,7 +291,17 @@ Player.prototype.addBuild = function(typeName) {
     if (!this.canBuild(typeName)) {
         return "Not enough energy"
     }
-    return currentPlatform.addBuild(typeName, this)
+    if (typeName == 'HealingDrone' || typeName == 'DefenderDrone') {
+        return this.buildDrone(typeName)
+    }else {    
+        return currentPlatform.addBuild(typeName, this)
+    }
+}
+
+Player.prototype.buildDrone = function(typeName) {
+    var drone = new window[typeName](this)
+    this.addActor(drone)
+    return "OK"
 }
 
 Player.prototype.canUpgrade = function(lvlProp) {
