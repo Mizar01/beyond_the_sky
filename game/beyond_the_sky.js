@@ -68,8 +68,8 @@ function game_init() {
     cameraFollowLogic.followSpeed = 0.1;
     cameraFollowLogic.run = function() {
         var tp = new THREE.Vector3(player.obj.position.x, 
-                                               player.obj.position.y + 10,   //10
-                                               player.obj.position.z + 28);  //28
+                                               player.obj.position.y + 13,   //10
+                                               player.obj.position.z + 22);  //28
         var cp = ace3.camera.pivot.position;
         if (cp.distanceTo(tp) > 0.6) { 
             var d = ACE3.Math.getDirection(cp, tp);
@@ -348,4 +348,64 @@ ACE3.Actor3D.prototype.getPitch = function(vec3Target) {
 **/
 ACE3.Actor.isAlive = function(actor) {
     return actor != null && actor.alive 
+}
+
+/**
+* Improved version of __run managing dead children
+*/
+ACE3.Actor.prototype.__run = function() {
+    if (this.alive) {
+        this.run()
+        for (id in this.actorChildren) {
+            var c = this.actorChildren[id]
+            if (c.alive) {
+                this.actorChildren[id].__run()
+            }else {
+                this.removeActor(c)
+            }
+        }
+    }      
+}
+
+/**
+* removes from the scene or the direct parent
+*/
+ACE3.Actor3D.prototype.removeFromScene = function () {
+    // console.log("removeFromScene:")
+    // console.log(this.obj.parent)
+    var parent = this.obj.parent
+    parent.remove(this.obj)
+}
+
+/**
+* Default beahaviour for removeSelf()
+* The remove() method should be called by manager
+* You can overwrite this method.
+* NOTE: Replaces the Actor.remove method.
+*/
+ACE3.Actor3D.prototype.removeSelf = function() {
+    // console.log("removeSelf:")
+    // console.log(this.obj.parent)
+    this.removeFromScene()
+    this.alive = false
+    if (this.pickable) {
+        _ace3.pickManager.removeActor(this)
+    }
+}
+
+/**
+* Default beahaviour for removeSelf()
+* The remove() method should be called by manager
+* You can overwrite this method.
+* NOTE: Replaces the Actor.remove method.
+*/
+ACE3.Actor.removeSelf = function() {}
+
+/**
+* New version of removeActor
+*/ 
+ACE3.Actor.removeActor = function(actor) {
+    actor.removeSelf()
+    actor.parentActor = null
+    delete this.actorChildren["" + actor.getId()]
 }

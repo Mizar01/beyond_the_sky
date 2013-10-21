@@ -279,6 +279,15 @@ Player.prototype.addControls = function() {
 }
 
 Player.prototype.canBuild = function(typeName) {
+    if (typeName == 'HealingDrone' || typeName == 'DefenseDrone') {
+        if (this.energy >= this.buildCostTable[typeName]) {
+            // TODO : do the control if drone already exists.
+            return true
+        }else {
+            return false
+        }
+    }
+
     var usedSlots = currentPlatform.getUsedSlots()
     if (usedSlots < 8 && 
         usedSlots < this.levels.turretSlots.level &&
@@ -291,7 +300,7 @@ Player.prototype.addBuild = function(typeName) {
     if (!this.canBuild(typeName)) {
         return "Not enough energy"
     }
-    if (typeName == 'HealingDrone' || typeName == 'DefenderDrone') {
+    if (typeName == 'HealingDrone' || typeName == 'DefenseDrone') {
         return this.buildDrone(typeName)
     }else {    
         return currentPlatform.addBuild(typeName, this)

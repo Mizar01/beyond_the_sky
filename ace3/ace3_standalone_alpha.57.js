@@ -351,7 +351,7 @@ ACE3.Actor.prototype = {
     * The remove() method should be called by manager
     * You can overwrite this method.
     */
-    remove: function() { 
+    removeSelf: function() { 
         //implement it in an extending class 
         // console.log("Warning: Called a non implemented remove for " + this.getId())
     },
@@ -394,6 +394,7 @@ ACE3.Actor.prototype = {
     * the child object alive in memory.
     */
     removeActor: function(actor) {
+        actor.removeSelf()
         actor.parentActor = null
         delete this.actorChildren["" + actor.getId()]  // DON'T USE SPLICE, we are not using iterative counts.
     },
@@ -477,7 +478,9 @@ ACE3.Actor3D.prototype.getId = function() {
 * The remove() method should be called by manager
 * You can overwrite this method.
 */
-ACE3.Actor3D.prototype.remove = function() {
+ACE3.Actor3D.prototype.removeSelf = function() {
+    console.log("removeSelf:")
+    console.log(this.obj.parent)
     this.removeFromScene()
     this.alive = false
     if (this.pickable) {
@@ -489,9 +492,11 @@ ACE3.Actor3D.prototype.setPickable = function() {
     _ace3.pickManager.addActor(this)
     this.pickable = true
 }
+
 ACE3.Actor3D.prototype.addToScene = function () {
     _ace3.scene.add(this.obj)
 }
+
 ACE3.Actor3D.prototype.removeFromScene = function () {
     _ace3.scene.remove(this.obj)
 }
@@ -509,10 +514,10 @@ ACE3.Actor3D.prototype.addActor = function(actor) {
 * and is lost every reference inside this actor. But any other reference outside will keep 
 * the child object alive in memory.
 */
-ACE3.Actor3D.prototype.removeActor = function(actor) {
-    this.obj.remove(actor.obj)
-    ACE3.Actor3D.superClass.removeActor.call(this, actor)
-}
+// ACE3.Actor3D.prototype.removeActor = function(actor) {
+//     this.obj.remove(actor.obj)
+//     ACE3.Actor3D.superClass.removeActor.call(this, actor)
+// }
 
 /**
 * It executes the lookAt THREE js implementation, but after 
@@ -817,7 +822,7 @@ ACE3.ActorManager.prototype = {
     unregisterActor: function(actor) {
         var id = "" + actor.getId()
         a = this.actors[id]
-        a.remove()
+        a.removeSelf()
         a.alive = false // can be used if referenced from some other objects to control if it's alive.
         a.manager = null
         delete this.actors[id]

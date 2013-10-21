@@ -183,7 +183,7 @@ function defineBuildManager() {
     _makeBuildButton("LaserTurret", 3, 1)
     _makeBuildButton("MissileTurret", 4, 1)
 
-    _makeBuildButton("DefenderDrone", 1, 2)
+    _makeBuildButton("DefenseDrone", 1, 2)
     _makeBuildButton("HealingDrone", 2, 2)
 
     _makeButton("<-", 10, 6,
