@@ -35,6 +35,15 @@ Enemy.prototype.run = function() {
 	if (this.obj.position.distanceTo(tp) < 0.5) {
 		this.setForRemoval();
 	}
+    //verify if that is colliding with defense drone
+    var drone = player.drones["DefenseDrone"]
+    if (ACE3.Actor.isAlive(drone)) {
+        if (this.obj.position.distanceTo(drone.realPosition) < 0.7) {
+            gameManager.registerActor(new ACE3.Explosion(this.obj.position))
+            this.setForRemoval()
+        }
+    }
+
 }
 
 Enemy.prototype.getDamage = function(qta, bulletType) {

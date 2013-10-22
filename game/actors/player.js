@@ -45,7 +45,9 @@ Player = function(firstPlatform) {
     this.speed = 0.03;
 
     this.life = 100;
+    this.maxLife = 100;
     this.energy = 10000;
+    this.maxEnergy = 10000;
 
     this.verifyStableMax = 4;  //for some iteration i have to verify the velocity to be less 
                                 //to a value to decide to re-enable jumps.
@@ -63,6 +65,8 @@ Player = function(firstPlatform) {
         "HealingDrone": 700,
         "EnergyShield": 1000,
     }
+
+    this.drones = {}
 
 }
 
@@ -310,8 +314,16 @@ Player.prototype.addBuild = function(typeName) {
 Player.prototype.buildDrone = function(typeName) {
     var drone = new window[typeName](this)
     this.addActor(drone)
+    this.drones[typeName] = drone
     return "OK"
 }
+
+Player.prototype.removeDrone = function(typeName) {
+    this.drones[typeName].setForRemoval()
+    this.drones[typeName] = null
+}
+
+
 
 Player.prototype.canUpgrade = function(lvlProp) {
     return this.levels.canUpgrade(lvlProp)
@@ -331,6 +343,10 @@ Player.prototype.getWorldCoords = function() {
     return this.obj.position
 }
 
+Player.prototype.heal = function() {
+    this.life = Math.max(this.life + 1, this.maxLife)
+}
+
 
 
 /**
@@ -341,7 +357,7 @@ function LevelDB(owner) {
     this.owner = owner
 
     this.exp = 1000 //this is something like money, not real experience, because
-                 // it is lost during an upgrade.
+                 // it is lost during an upgrade. We should call it 'Crystals'
     
     this.weaponPower = new LevelProperty("Weapon Power", 1, 3)
     this.weaponAccuracy = new LevelProperty("Accuracy", 1, 10)
@@ -379,7 +395,7 @@ function LevelDB(owner) {
 function LevelProperty(name, initLevel, expNeeded, levelMax) {
     this.name = name;
     this.level = initLevel;
-    this.expNeeded = expNeeded;
+    this.expNeeded = expNeeded; //like crystals needed
     this.levelMax = levelMax || "INF"; //an integer or "INF"
     this.maxReached = false;
     //this.owner = owner
