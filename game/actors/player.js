@@ -284,8 +284,7 @@ Player.prototype.addControls = function() {
 
 Player.prototype.canBuild = function(typeName) {
     if (typeName == 'HealingDrone' || typeName == 'DefenseDrone') {
-        if (this.energy >= this.buildCostTable[typeName]) {
-            // TODO : do the control if drone already exists.
+        if (this.energy >= this.buildCostTable[typeName] && this.drones[typeName] == null) {
             return true
         }else {
             return false
@@ -302,7 +301,7 @@ Player.prototype.canBuild = function(typeName) {
 }
 Player.prototype.addBuild = function(typeName) {
     if (!this.canBuild(typeName)) {
-        return "Not enough energy"
+        return "Cannot build " + typeName
     }
     if (typeName == 'HealingDrone' || typeName == 'DefenseDrone') {
         return this.buildDrone(typeName)
@@ -344,7 +343,11 @@ Player.prototype.getWorldCoords = function() {
 }
 
 Player.prototype.heal = function() {
-    this.life = Math.max(this.life + 1, this.maxLife)
+    this.life = Math.min(this.life + 1, this.maxLife)
+}
+
+Player.prototype.getDamage = function(qta) {
+    this.life -= qta
 }
 
 

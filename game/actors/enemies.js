@@ -1,5 +1,6 @@
-Enemy = function() {
+Enemy = function(level) {
 	ACE3.Actor3D.call(this);
+    this.level = level || 1
 	this.speed = 0.005 + Math.random() * 0.005;
 	this.obj = new THREE.Object3D();//new ACE3.Builder.cube(0.5, 0x000000);
     var g = new THREE.CylinderGeometry(0.1, 0.3, 1.2)
@@ -22,6 +23,7 @@ Enemy = function() {
     this.slowEffectPower = 0
     this.slowEffectTimer = null
 
+    this.damage = 3 * this.level
 
 }
 
@@ -33,6 +35,8 @@ Enemy.prototype.run = function() {
 	this.obj.translateZ(this.calculateSpeed());
 	this.polygon.rotation.y += 0.1;
 	if (this.obj.position.distanceTo(tp) < 0.5) {
+        //the player takes damage
+        player.getDamage(this.damage)
 		this.setForRemoval();
 	}
     //verify if that is colliding with defense drone
